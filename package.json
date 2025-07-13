@@ -3,13 +3,11 @@
   "version": "1.0.0",
   "description": "Google Apps Script проект",
   "scripts": {
-    "push": "clasp push --force",
-    "pull": "clasp pull",
-    "deploy": "clasp deploy",
-    "open": "clasp open",
-    "logs": "clasp logs",
-    "versions": "clasp versions",
-    "create": "clasp create --type standalone",
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development",
+    "clean": "rimraf gas",
+    "push": "npm run build && clasp push --force",
+    "login": "clasp login",
     "status": "clasp status"
   },
   "keywords": [
@@ -20,7 +18,17 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
     "@google/clasp": "^2.4.2",
-    "@types/google-apps-script": "^1.0.83"
+    "@types/google-apps-script": "^1.0.99",
+    "babel-loader": "^10.0.0",
+    "copy-webpack-plugin": "^13.0.0",
+    "gas-webpack-plugin": "^2.6.0",
+    "rimraf": "^5.0.10",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "webpack": "^5.100.1",
+    "webpack-cli": "^6.0.1"
   }
-} 
+}
