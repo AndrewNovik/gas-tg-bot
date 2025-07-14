@@ -44,13 +44,13 @@ export interface TelegramUpdate {
 export enum StateType {
   ADDING_CATEGORY_NAME = 'adding_category_name',
   ADDING_CATEGORY_TYPE = 'adding_category_type',
-  ADDING_CATEGORY_EMOJI = 'adding_category_emoji'
+  ADDING_CATEGORY_EMOJI = 'adding_category_emoji',
 }
 
 export enum CategoryType {
   INCOME = 'income',
   EXPENSE = 'expense',
-  TRANSFER = 'transfer'
+  TRANSFER = 'transfer',
 }
 
 export interface UserState {
@@ -98,4 +98,4 @@ export interface Category {
 export interface BotCommand {
   command: string;
   description: string;
-} 
+}

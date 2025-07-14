@@ -29,44 +29,44 @@ export class QueryCommandsController {
     this.answerCallbackQuery(query.id);
 
     switch (data) {
-      case "start":
+      case 'start':
         this.messageService.sendText(chatId, `Привет, ${firstName}! Я простой бот на GAS.`);
         break;
 
-      case "help":
+      case 'help':
         this.messageService.sendText(
           chatId,
-          "Доступные команды:\n/start - приветствие\n/help - справка\n/menu - основное меню\n/add - добавить транзакцию\n/addcategory - добавить категорию"
+          'Доступные команды:\n/start - приветствие\n/help - справка\n/menu - основное меню\n/add - добавить транзакцию\n/addcategory - добавить категорию',
         );
         break;
 
-      case "stats":
-        this.messageService.sendText(chatId, "📊 Статистика пока недоступна");
+      case 'stats':
+        this.messageService.sendText(chatId, '📊 Статистика пока недоступна');
         break;
 
-      case "settings":
-        this.messageService.sendText(chatId, "⚙️ Настройки пока недоступны");
+      case 'settings':
+        this.messageService.sendText(chatId, '⚙️ Настройки пока недоступны');
         break;
 
       // Обработка типов категорий
-      case "category_type_income":
+      case 'category_type_income':
         this.handleCategoryTypeSelection(chatId, CategoryType.INCOME);
         break;
 
-      case "category_type_expense":
+      case 'category_type_expense':
         this.handleCategoryTypeSelection(chatId, CategoryType.EXPENSE);
         break;
 
-      case "category_type_transfer":
+      case 'category_type_transfer':
         this.handleCategoryTypeSelection(chatId, CategoryType.TRANSFER);
         break;
 
-      case "cancel_add_category":
+      case 'cancel_add_category':
         this.handleCancelAddCategory(chatId);
         break;
 
       default:
-        this.messageService.sendText(chatId, "Неизвестная команда");
+        this.messageService.sendText(chatId, 'Неизвестная команда');
     }
   }
 
@@ -81,39 +81,45 @@ export class QueryCommandsController {
       const typeNames = {
         [CategoryType.INCOME]: 'Доход',
         [CategoryType.EXPENSE]: 'Расход',
-        [CategoryType.TRANSFER]: 'Перевод'
+        [CategoryType.TRANSFER]: 'Перевод',
       };
 
-      const message = `✅ Тип: ${typeNames[type]}\n\n` +
+      const message =
+        `✅ Тип: ${typeNames[type]}\n\n` +
         `😊 Теперь введите эмодзи для категории (например: 🍕, 🚗, 📚):`;
 
       this.messageService.sendText(chatId, message);
-
     } catch (error) {
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `❌ Ошибка в handleCategoryTypeSelection для ${chatId}: ${error instanceof Error ? error.message : String(error)}`);
-      this.messageService.sendText(chatId, `❌ Произошла ошибка при выборе типа: ${error instanceof Error ? error.message : String(error)}`);
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка в handleCategoryTypeSelection для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      this.messageService.sendText(
+        chatId,
+        `❌ Произошла ошибка при выборе типа: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
   private handleCancelAddCategory(chatId: number): void {
     this.stateManager.clearUserState(chatId);
-    this.messageService.sendText(chatId, "❌ Добавление категории отменено");
+    this.messageService.sendText(chatId, '❌ Добавление категории отменено');
   }
 
   private answerCallbackQuery(callbackQueryId: string): any {
     const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/answerCallbackQuery`;
 
     const payload = {
-      callback_query_id: callbackQueryId
+      callback_query_id: callbackQueryId,
     };
 
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: "post",
+      method: 'post',
       headers: {
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
       },
       payload: JSON.stringify(payload),
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
     };
 
     try {
@@ -126,8 +132,11 @@ export class QueryCommandsController {
 
       return result;
     } catch (error) {
-      console.error('❌ Критическая ошибка answerCallbackQuery:', error instanceof Error ? error.message : String(error));
+      console.error(
+        '❌ Критическая ошибка answerCallbackQuery:',
+        error instanceof Error ? error.message : String(error),
+      );
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
     }
   }
-} 
+}

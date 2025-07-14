@@ -1,14 +1,7 @@
 import { CONFIG } from '../config';
 import { BotCommand } from '../types';
-import { MessageService } from './MessageService';
-
 export class CommandService {
   private static instance: CommandService;
-  private messageService: MessageService;
-
-  private constructor() {
-    this.messageService = MessageService.getInstance();
-  }
 
   public static getInstance(): CommandService {
     if (!CommandService.instance) {
@@ -21,31 +14,31 @@ export class CommandService {
     const commands: BotCommand[] = [
       {
         command: 'start',
-        description: 'Приветствие и краткое описание функционала'
+        description: 'Приветствие и краткое описание функционала',
       },
       {
         command: 'help',
-        description: 'Список всех команд и инструкции по использованию'
+        description: 'Список всех команд и инструкции по использованию',
       },
       {
         command: 'menu',
-        description: 'Основное меню с кнопками быстрого доступа'
+        description: 'Основное меню с кнопками быстрого доступа',
       },
       {
         command: 'add',
-        description: 'Добавить новую транзакцию в таблицу'
+        description: 'Добавить новую транзакцию в таблицу',
       },
       {
         command: 'addcategory',
-        description: 'Добавить новую категорию транзакций'
-      }
+        description: 'Добавить новую категорию транзакций',
+      },
     ];
 
     // Валидация команд
     const validationErrors = this.validateCommands(commands);
     if (validationErrors.length > 0) {
       console.error('❌ Ошибки валидации команд:');
-      validationErrors.forEach(error => console.error(`  - ${error}`));
+      validationErrors.forEach((error) => console.error(`  - ${error}`));
       return;
     }
 
@@ -55,9 +48,9 @@ export class CommandService {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
       payload: JSON.stringify({
-        commands: commands
+        commands: commands,
       }),
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
     };
 
     try {
@@ -67,14 +60,17 @@ export class CommandService {
       if (result.ok) {
         console.log('✅ Команды бота успешно установлены!');
         console.log('Доступные команды:');
-        commands.forEach(cmd => {
+        commands.forEach((cmd) => {
           console.log(`/${cmd.command} - ${cmd.description}`);
         });
       } else {
         console.error('❌ Ошибка установки команд:', result.description);
       }
     } catch (error) {
-      console.error('❌ Критическая ошибка при установке команд:', error instanceof Error ? error.message : String(error));
+      console.error(
+        '❌ Критическая ошибка при установке команд:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
@@ -83,7 +79,7 @@ export class CommandService {
 
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       method: 'get',
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
     };
 
     try {
@@ -103,7 +99,10 @@ export class CommandService {
         console.error('❌ Ошибка получения команд:', result.description);
       }
     } catch (error) {
-      console.error('❌ Критическая ошибка при получении команд:', error instanceof Error ? error.message : String(error));
+      console.error(
+        '❌ Критическая ошибка при получении команд:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
@@ -112,7 +111,7 @@ export class CommandService {
 
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       method: 'post',
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
     };
 
     try {
@@ -125,7 +124,10 @@ export class CommandService {
         console.error('❌ Ошибка удаления команд:', result.description);
       }
     } catch (error) {
-      console.error('❌ Критическая ошибка при удалении команд:', error instanceof Error ? error.message : String(error));
+      console.error(
+        '❌ Критическая ошибка при удалении команд:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
@@ -135,12 +137,16 @@ export class CommandService {
     commands.forEach((cmd, index) => {
       // Проверка названия команды
       if (!/^[a-z0-9_]+$/.test(cmd.command)) {
-        errors.push(`Команда "${cmd.command}" содержит недопустимые символы. Разрешены только буквы, цифры и подчеркивания`);
+        errors.push(
+          `Команда "${cmd.command}" содержит недопустимые символы. Разрешены только буквы, цифры и подчеркивания`,
+        );
       }
 
       // Проверка длины описания
       if (cmd.description.length > 256) {
-        errors.push(`Описание команды "${cmd.command}" превышает 256 символов (${cmd.description.length})`);
+        errors.push(
+          `Описание команды "${cmd.command}" превышает 256 символов (${cmd.description.length})`,
+        );
       }
 
       // Проверка, что команда не начинается с цифры
@@ -156,4 +162,4 @@ export class CommandService {
 
     return errors;
   }
-} 
+}

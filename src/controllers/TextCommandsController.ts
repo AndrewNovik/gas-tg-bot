@@ -29,46 +29,58 @@ export class TextCommandsController {
     const firstName = message.from.first_name;
 
     switch (text) {
-      case "/start":
+      case '/start':
         this.messageService.sendText(chatId, `Привет, ${firstName}! Я простой бот на GAS.`);
         break;
 
-      case "/help":
+      case '/help':
         this.messageService.sendText(
           chatId,
-          "Доступные команды:\n/start - приветствие\n/help - справка\n/menu - основное меню\n/add - добавить транзакцию\n/addcategory - добавить категорию"
+          'Доступные команды:\n/start - приветствие\n/help - справка\n/menu - основное меню\n/add - добавить транзакцию\n/addcategory - добавить категорию',
         );
         break;
 
-      case "/menu":
+      case '/menu':
         this.messageService.sendMenu(chatId);
         break;
 
-      case "/add":
+      case '/add':
         this.handleAddTransaction(chatId, firstName);
         break;
 
-      case "/addcategory":
+      case '/addcategory':
         this.handleAddCategoryStart(chatId, firstName);
         break;
 
-      case "/testcache":
+      case '/testcache':
         this.testCache();
         break;
 
       default:
         // Проверяем, находится ли пользователь в процессе добавления категории
         const currentState = this.stateManager.getUserState(chatId);
-        this.messageService.sendText(Number(CONFIG.ADMIN_ID), `🔍 Проверка состояния для ${chatId}: ${currentState ? JSON.stringify(currentState) : 'null'}`);
+        this.messageService.sendText(
+          Number(CONFIG.ADMIN_ID),
+          `🔍 Проверка состояния для ${chatId}: ${currentState ? JSON.stringify(currentState) : 'null'}`,
+        );
 
         if (this.stateManager.isUserInState(chatId, StateType.ADDING_CATEGORY_NAME)) {
-          this.messageService.sendText(Number(CONFIG.ADMIN_ID), `✅ Обрабатываем ввод названия категории: "${text}"`);
+          this.messageService.sendText(
+            Number(CONFIG.ADMIN_ID),
+            `✅ Обрабатываем ввод названия категории: "${text}"`,
+          );
           this.handleCategoryNameInput(chatId, text);
         } else if (this.stateManager.isUserInState(chatId, StateType.ADDING_CATEGORY_EMOJI)) {
-          this.messageService.sendText(Number(CONFIG.ADMIN_ID), `✅ Обрабатываем ввод эмодзи: "${text}"`);
+          this.messageService.sendText(
+            Number(CONFIG.ADMIN_ID),
+            `✅ Обрабатываем ввод эмодзи: "${text}"`,
+          );
           this.handleCategoryEmojiInput(chatId, text);
         } else {
-          this.messageService.sendText(Number(CONFIG.ADMIN_ID), `❌ Пользователь ${chatId} не в состоянии добавления категории. Текст: "${text}"`);
+          this.messageService.sendText(
+            Number(CONFIG.ADMIN_ID),
+            `❌ Пользователь ${chatId} не в состоянии добавления категории. Текст: "${text}"`,
+          );
           // Эхо-ответ
           this.messageService.sendText(chatId, `Вы написали: "${text}"`);
         }
@@ -84,7 +96,7 @@ export class TextCommandsController {
       'Покупка книги',
       'Обед в кафе',
       'Транспорт',
-      'Покупка одежды'
+      'Покупка одежды',
     ];
 
     const testCategories = [
@@ -94,7 +106,7 @@ export class TextCommandsController {
       'Образование',
       'Питание',
       'Транспорт',
-      'Одежда'
+      'Одежда',
     ];
 
     // Выбираем случайные данные
@@ -110,7 +122,8 @@ export class TextCommandsController {
       if (result.success && result.data) {
         const date = `${result.data?.[0] ?? ''}`;
         const time = `${result.data?.[1] ?? ''}`;
-        const message = `✅ Транзакция успешно добавлена!\n\n` +
+        const message =
+          `✅ Транзакция успешно добавлена!\n\n` +
           `📝 Описание: ${description}\n` +
           `💰 Сумма: ${amount} руб.\n` +
           `📂 Категория: ${category}\n` +
@@ -120,18 +133,29 @@ export class TextCommandsController {
 
         this.messageService.sendText(chatId, message);
       } else {
-        this.messageService.sendText(chatId, `❌ Ошибка при добавлении транзакции: ${result.error || 'Неизвестная ошибка'}`);
+        this.messageService.sendText(
+          chatId,
+          `❌ Ошибка при добавлении транзакции: ${result.error || 'Неизвестная ошибка'}`,
+        );
       }
-
     } catch (error) {
-      console.error('❌ Ошибка в handleAddTransaction:', error instanceof Error ? error.message : String(error));
-      this.messageService.sendText(chatId, `❌ Произошла ошибка при добавлении транзакции: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        '❌ Ошибка в handleAddTransaction:',
+        error instanceof Error ? error.message : String(error),
+      );
+      this.messageService.sendText(
+        chatId,
+        `❌ Произошла ошибка при добавлении транзакции: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
   private handleAddCategoryStart(chatId: number, firstName: string): void {
     try {
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `🚀 Начало добавления категории для ${chatId}`);
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `🚀 Начало добавления категории для ${chatId}`,
+      );
 
       // Получаем следующий ID для категории
       const nextId = this.googleSheetsService.getNextCategoryId();
@@ -139,25 +163,37 @@ export class TextCommandsController {
 
       // Устанавливаем состояние пользователя
       this.stateManager.setUserState(chatId, StateType.ADDING_CATEGORY_NAME, {
-        categoryId: nextId
+        categoryId: nextId,
       });
 
-      const message = `📂 Добавление новой категории\n\n` +
+      const message =
+        `📂 Добавление новой категории\n\n` +
         `🆔 ID категории: ${nextId}\n\n` +
         `📝 Введите название категории:`;
 
       this.messageService.sendText(chatId, message);
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `✅ Сообщение отправлено пользователю ${chatId}`);
-
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `✅ Сообщение отправлено пользователю ${chatId}`,
+      );
     } catch (error) {
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `❌ Ошибка в handleAddCategoryStart для ${chatId}: ${error instanceof Error ? error.message : String(error)}`);
-      this.messageService.sendText(chatId, `❌ Произошла ошибка при начале добавления категории: ${error instanceof Error ? error.message : String(error)}`);
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка в handleAddCategoryStart для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      this.messageService.sendText(
+        chatId,
+        `❌ Произошла ошибка при начале добавления категории: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
   private handleCategoryNameInput(chatId: number, name: string): void {
     try {
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `📝 Обработка названия категории для ${chatId}: "${name}"`);
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `📝 Обработка названия категории для ${chatId}: "${name}"`,
+      );
 
       // Обновляем состояние с названием
       this.stateManager.updateUserStateData(chatId, { name: name });
@@ -165,16 +201,23 @@ export class TextCommandsController {
       // Переходим к выбору типа (обновляем только тип, сохраняя данные)
       this.stateManager.updateUserStateType(chatId, StateType.ADDING_CATEGORY_TYPE);
 
-      const message = `✅ Название: "${name}"\n\n` +
-        `📂 Теперь выберите тип категории:`;
+      const message = `✅ Название: "${name}"\n\n` + `📂 Теперь выберите тип категории:`;
 
       this.messageService.sendText(chatId, message);
       this.messageService.sendCategoryTypeKeyboard(chatId);
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `✅ Клавиатура с типами отправлена пользователю ${chatId}`);
-
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `✅ Клавиатура с типами отправлена пользователю ${chatId}`,
+      );
     } catch (error) {
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `❌ Ошибка в handleCategoryNameInput для ${chatId}: ${error instanceof Error ? error.message : String(error)}`);
-      this.messageService.sendText(chatId, `❌ Произошла ошибка при обработке названия: ${error instanceof Error ? error.message : String(error)}`);
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка в handleCategoryNameInput для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      this.messageService.sendText(
+        chatId,
+        `❌ Произошла ошибка при обработке названия: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -182,7 +225,10 @@ export class TextCommandsController {
     try {
       const state = this.stateManager.getUserState(chatId);
       if (!state) {
-        this.messageService.sendText(chatId, "❌ Состояние пользователя не найдено. Начните заново с /addcategory");
+        this.messageService.sendText(
+          chatId,
+          '❌ Состояние пользователя не найдено. Начните заново с /addcategory',
+        );
         return;
       }
 
@@ -195,10 +241,11 @@ export class TextCommandsController {
         const typeNames: Record<string, string> = {
           [CategoryType.INCOME]: 'Доход',
           [CategoryType.EXPENSE]: 'Расход',
-          [CategoryType.TRANSFER]: 'Перевод'
+          [CategoryType.TRANSFER]: 'Перевод',
         };
 
-        const message = `✅ Категория успешно добавлена!\n\n` +
+        const message =
+          `✅ Категория успешно добавлена!\n\n` +
           `🆔 ID: ${categoryId}\n` +
           `📝 Название: ${name}\n` +
           `📂 Тип: ${typeNames[type as string] || type}\n` +
@@ -207,48 +254,60 @@ export class TextCommandsController {
 
         this.messageService.sendText(chatId, message);
       } else {
-        this.messageService.sendText(chatId, `❌ Ошибка при добавлении категории: ${result.error || 'Неизвестная ошибка'}`);
+        this.messageService.sendText(
+          chatId,
+          `❌ Ошибка при добавлении категории: ${result.error || 'Неизвестная ошибка'}`,
+        );
       }
 
       // Очищаем состояние пользователя
       this.stateManager.clearUserState(chatId);
-
     } catch (error) {
-      console.error('❌ Ошибка в handleCategoryEmojiInput:', error instanceof Error ? error.message : String(error));
-      this.messageService.sendText(chatId, `❌ Произошла ошибка при добавлении категории: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        '❌ Ошибка в handleCategoryEmojiInput:',
+        error instanceof Error ? error.message : String(error),
+      );
+      this.messageService.sendText(
+        chatId,
+        `❌ Произошла ошибка при добавлении категории: ${error instanceof Error ? error.message : String(error)}`,
+      );
       this.stateManager.clearUserState(chatId);
     }
   }
 
   private testCache(): void {
     try {
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), "🧪 Начинаем тест кэша");
+      this.messageService.sendText(Number(CONFIG.ADMIN_ID), '🧪 Начинаем тест кэша');
 
       const cache = CacheService.getScriptCache();
-      const testKey = "test_key";
-      const testValue = "test_value";
+      const testKey = 'test_key';
+      const testValue = 'test_value';
 
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `🧪 Сохраняем тестовые данные: ${testKey} = ${testValue}`);
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `🧪 Сохраняем тестовые данные: ${testKey} = ${testValue}`,
+      );
       cache.put(testKey, testValue, 3600);
 
       const retrievedValue = cache.get(testKey);
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `🧪 Полученные данные: ${retrievedValue}`);
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `🧪 Полученные данные: ${retrievedValue}`,
+      );
 
       if (retrievedValue === testValue) {
-        this.messageService.sendText(Number(CONFIG.ADMIN_ID), "✅ Тест кэша прошел успешно!");
+        this.messageService.sendText(Number(CONFIG.ADMIN_ID), '✅ Тест кэша прошел успешно!');
       } else {
-        this.messageService.sendText(Number(CONFIG.ADMIN_ID), "❌ Тест кэша провалился!");
+        this.messageService.sendText(Number(CONFIG.ADMIN_ID), '❌ Тест кэша провалился!');
       }
 
       // Очищаем тестовые данные
       cache.remove(testKey);
-
     } catch (error) {
-      this.messageService.sendText(Number(CONFIG.ADMIN_ID), `❌ Ошибка в тесте кэша: ${error instanceof Error ? error.message : String(error)}`);
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка в тесте кэша: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
-
-
-
-
-} 
+}

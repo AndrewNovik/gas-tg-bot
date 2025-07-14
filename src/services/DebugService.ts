@@ -17,6 +17,6 @@ export class DebugService {
   }
 
   public testSendMessage(): void {
-    this.messageService.sendText(Number(CONFIG.ADMIN_ID), "Бот успешно запущен!");
+    this.messageService.sendText(Number(CONFIG.ADMIN_ID), 'Бот успешно запущен!');
   }
-} 
+}

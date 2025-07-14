@@ -3,7 +3,7 @@ import { CONFIG } from '../config';
 export class WebhookService {
   private static instance: WebhookService;
 
-  private constructor() { }
+  private constructor() {}
 
   public static getInstance(): WebhookService {
     if (!WebhookService.instance) {
@@ -18,14 +18,14 @@ export class WebhookService {
 
     const payload = {
       url: webUrl,
-      allowed_updates: ["message", "callback_query"]
+      allowed_updates: ['message', 'callback_query'],
     };
 
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
       payload: JSON.stringify(payload),
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
     };
 
     try {
@@ -33,12 +33,15 @@ export class WebhookService {
       const result = JSON.parse(response.getContentText());
 
       if (result.ok) {
-        console.log("✅ Webhook успешно установлен с поддержкой callback_query");
+        console.log('✅ Webhook успешно установлен с поддержкой callback_query');
       } else {
         console.log(`❌ Ошибка установки webhook: ${result.description}`);
       }
     } catch (error) {
-      console.error('❌ Критическая ошибка при установке webhook:', error instanceof Error ? error.message : String(error));
+      console.error(
+        '❌ Критическая ошибка при установке webhook:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
@@ -48,9 +51,12 @@ export class WebhookService {
     try {
       const response = UrlFetchApp.fetch(url);
       const result = JSON.parse(response.getContentText());
-      console.log("Информация о вебхуке:", JSON.stringify(result, null, 2));
+      console.log('Информация о вебхуке:', JSON.stringify(result, null, 2));
     } catch (error) {
-      console.error('❌ Критическая ошибка при получении информации о webhook:', error instanceof Error ? error.message : String(error));
+      console.error(
+        '❌ Критическая ошибка при получении информации о webhook:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
 
@@ -71,12 +77,15 @@ export class WebhookService {
       const result = JSON.parse(response.getContentText());
 
       if (result.ok) {
-        console.log("✅ Webhook успешно удален");
+        console.log('✅ Webhook успешно удален');
       } else {
         console.log(`❌ Ошибка удаления webhook: ${result.description}`);
       }
     } catch (error) {
-      console.error('❌ Критическая ошибка при удалении webhook:', error instanceof Error ? error.message : String(error));
+      console.error(
+        '❌ Критическая ошибка при удалении webhook:',
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
-} 
+}

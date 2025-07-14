@@ -17,7 +17,7 @@ export interface CategoryResult {
 export class GoogleSheetsService {
   private static instance: GoogleSheetsService;
 
-  private constructor() { }
+  private constructor() {}
 
   public static getInstance(): GoogleSheetsService {
     if (!GoogleSheetsService.instance) {
@@ -26,7 +26,11 @@ export class GoogleSheetsService {
     return GoogleSheetsService.instance;
   }
 
-  public addTransaction(description: string, amount: number, category: string = 'Прочее'): TransactionResult {
+  public addTransaction(
+    description: string,
+    amount: number,
+    category: string = 'Прочее',
+  ): TransactionResult {
     try {
       const sheet = this.connectToGoogleSheet('Transactions');
 
@@ -40,11 +44,11 @@ export class GoogleSheetsService {
 
       // Подготавливаем данные для записи
       const rowData: [string, string, string, number, string] = [
-        date,           // Дата
-        time,           // Время
-        description,    // Описание
-        amount,         // Сумма
-        category        // Категория
+        date, // Дата
+        time, // Время
+        description, // Описание
+        amount, // Сумма
+        category, // Категория
       ];
 
       // Записываем данные в строку
@@ -53,13 +57,12 @@ export class GoogleSheetsService {
       return {
         success: true,
         row: nextRow,
-        data: rowData
+        data: rowData,
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -75,7 +78,7 @@ export class GoogleSheetsService {
 
       // Получаем все ID из первой колонки (начиная со 2-й строки)
       const idColumn = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-      const ids = idColumn.map(row => row[0]).filter(id => id !== '' && id !== null);
+      const ids = idColumn.map((row) => row[0]).filter((id) => id !== '' && id !== null);
 
       if (ids.length === 0) {
         return 0;
@@ -84,9 +87,11 @@ export class GoogleSheetsService {
       // Находим максимальный ID и инкрементируем
       const maxId = Math.max(...ids);
       return maxId + 1;
-
     } catch (error) {
-      console.error('❌ Ошибка при получении следующего ID категории:', error instanceof Error ? error.message : String(error));
+      console.error(
+        '❌ Ошибка при получении следующего ID категории:',
+        error instanceof Error ? error.message : String(error),
+      );
       return 0;
     }
   }
@@ -100,10 +105,10 @@ export class GoogleSheetsService {
 
       // Подготавливаем данные для записи
       const rowData: [number, string, string, string] = [
-        id,      // ID
-        name,    // Название
-        type,    // Тип (income/expense/transfer)
-        emoji    // Эмодзи
+        id, // ID
+        name, // Название
+        type, // Тип (income/expense/transfer)
+        emoji, // Эмодзи
       ];
 
       // Записываем данные в строку
@@ -112,13 +117,12 @@ export class GoogleSheetsService {
       return {
         success: true,
         row: nextRow,
-        data: rowData
+        data: rowData,
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -133,4 +137,4 @@ export class GoogleSheetsService {
 
     return sheet;
   }
-} 
+}

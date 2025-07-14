@@ -23,7 +23,7 @@ export class StateManager {
       const state: UserState = {
         type: stateType,
         data: data,
-        timestamp: new Date().getTime()
+        timestamp: new Date().getTime(),
       };
 
       const key = `user_state_${chatId}`;
@@ -35,9 +35,9 @@ export class StateManager {
 
       // Проверяем, что кэш доступен
       const testKey = `test_${Date.now()}`;
-      this.cache.put(testKey, "test", 60);
+      this.cache.put(testKey, 'test', 60);
       const testResult = this.cache.get(testKey);
-      this.sendAdminMessage(`🔧 Тест кэша: ${testResult === "test" ? "OK" : "FAILED"}`);
+      this.sendAdminMessage(`🔧 Тест кэша: ${testResult === 'test' ? 'OK' : 'FAILED'}`);
       this.cache.remove(testKey);
 
       this.cache.put(key, stateJson, 3600);
@@ -51,9 +51,10 @@ export class StateManager {
       }
 
       this.sendAdminMessage(`✅ Состояние установлено для ${chatId}: ${stateJson}`);
-
     } catch (error) {
-      this.sendAdminMessage(`❌ Ошибка в setUserState для ${chatId}: ${error instanceof Error ? error.message : String(error)}`);
+      this.sendAdminMessage(
+        `❌ Ошибка в setUserState для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -67,9 +68,11 @@ export class StateManager {
 
       // Проверяем, что кэш работает
       const testKey = `test_get_${Date.now()}`;
-      this.cache.put(testKey, "test_get", 60);
+      this.cache.put(testKey, 'test_get', 60);
       const testResult = this.cache.get(testKey);
-      this.sendAdminMessage(`🔍 Тест получения из кэша: ${testResult === "test_get" ? "OK" : "FAILED"}`);
+      this.sendAdminMessage(
+        `🔍 Тест получения из кэша: ${testResult === 'test_get' ? 'OK' : 'FAILED'}`,
+      );
       this.cache.remove(testKey);
 
       const stateJson = this.cache.get(key);
@@ -81,16 +84,19 @@ export class StateManager {
           this.sendAdminMessage(`✅ Получено состояние для ${chatId}: ${JSON.stringify(state)}`);
           return state;
         } catch (error) {
-          this.sendAdminMessage(`❌ Ошибка парсинга состояния для ${chatId}: ${error instanceof Error ? error.message : String(error)}`);
+          this.sendAdminMessage(
+            `❌ Ошибка парсинга состояния для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
+          );
           return null;
         }
       }
 
       this.sendAdminMessage(`❌ Состояние для ${chatId} не найдено в кэше`);
       return null;
-
     } catch (error) {
-      this.sendAdminMessage(`❌ Ошибка в getUserState для ${chatId}: ${error instanceof Error ? error.message : String(error)}`);
+      this.sendAdminMessage(
+        `❌ Ошибка в getUserState для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return null;
     }
   }
@@ -137,7 +143,9 @@ export class StateManager {
       this.sendAdminMessage(`🔄 Тип состояния обновлен для ${chatId}: ${newType}`);
       this.sendAdminMessage(`🔄 Полное состояние: ${JSON.stringify(state)}`);
     } else {
-      this.sendAdminMessage(`❌ Не удалось обновить тип состояния для ${chatId}: состояние не найдено`);
+      this.sendAdminMessage(
+        `❌ Не удалось обновить тип состояния для ${chatId}: состояние не найдено`,
+      );
     }
   }
 
@@ -147,16 +155,16 @@ export class StateManager {
       const payload = {
         chat_id: CONFIG.ADMIN_ID,
         text: message,
-        parse_mode: "HTML"
+        parse_mode: 'HTML',
       };
 
       const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-        method: "post",
+        method: 'post',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
         },
         payload: JSON.stringify(payload),
-        muteHttpExceptions: true
+        muteHttpExceptions: true,
       };
 
       UrlFetchApp.fetch(url, options);
@@ -164,4 +172,4 @@ export class StateManager {
       console.error('Ошибка отправки сообщения админу:', error);
     }
   }
-} 
+}
