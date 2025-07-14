@@ -4,7 +4,6 @@ import { StateManager } from './services/StateManager';
 import { MessageService } from './services/MessageService';
 import { CommandService } from './services/CommandService';
 import { WebhookService } from './services/WebhookService';
-import { DebugService } from './services/DebugService';
 import { GoogleSheetsService } from './services/GoogleSheetsService';
 import { TextCommandsController } from './controllers/TextCommandsController';
 import { QueryCommandsController } from './controllers/QueryCommandsController';
@@ -14,7 +13,6 @@ const stateManager = StateManager.getInstance();
 const messageService = MessageService.getInstance();
 const commandService = CommandService.getInstance();
 const webhookService = WebhookService.getInstance();
-const debugService = DebugService.getInstance();
 const googleSheetsService = GoogleSheetsService.getInstance();
 
 // Инициализация контроллеров
@@ -27,7 +25,6 @@ function startBot() {
   webhookService.deleteWebhook();
   webhookService.setWebhook();
   commandService.setupBotCommands();
-  debugService.testSendMessage();
 }
 
 function doPost(e: any) {

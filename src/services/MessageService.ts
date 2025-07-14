@@ -35,7 +35,6 @@ export class MessageService {
       const response = UrlFetchApp.fetch(url, options);
       return JSON.parse(response.getContentText());
     } catch (error) {
-      console.error('Ошибка отправки текста:', error);
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -71,7 +70,6 @@ export class MessageService {
       const response = UrlFetchApp.fetch(url, options);
       return JSON.parse(response.getContentText());
     } catch (error) {
-      console.error('Ошибка отправки меню:', error);
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -104,7 +102,6 @@ export class MessageService {
       const response = UrlFetchApp.fetch(url, options);
       return JSON.parse(response.getContentText());
     } catch (error) {
-      console.error('Ошибка отправки клавиатуры типа категории:', error);
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -129,13 +126,8 @@ export class MessageService {
       const response = UrlFetchApp.fetch(url, options);
       const result = JSON.parse(response.getContentText());
 
-      if (!result.ok) {
-        console.error('❌ Ошибка answerCallbackQuery:', result.description);
-      }
-
       return result;
     } catch (error) {
-      console.error('❌ Критическая ошибка answerCallbackQuery:', error);
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
     }
   }

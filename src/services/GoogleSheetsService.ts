@@ -1,4 +1,5 @@
 import { CONFIG } from '../config';
+import { MessageService } from './MessageService';
 
 export interface TransactionResult {
   success: boolean;
@@ -16,8 +17,11 @@ export interface CategoryResult {
 
 export class GoogleSheetsService {
   private static instance: GoogleSheetsService;
+  private messageService: MessageService;
 
-  private constructor() {}
+  private constructor() {
+    this.messageService = MessageService.getInstance();
+  }
 
   public static getInstance(): GoogleSheetsService {
     if (!GoogleSheetsService.instance) {
@@ -33,6 +37,13 @@ export class GoogleSheetsService {
   ): TransactionResult {
     try {
       const sheet = this.connectToGoogleSheet('Transactions');
+
+      if (!sheet) {
+        return {
+          success: false,
+          error: 'Лист Transactions не найден',
+        };
+      }
 
       // Получаем текущую дату и время
       const now = new Date();
@@ -70,6 +81,11 @@ export class GoogleSheetsService {
   public getNextCategoryId(): number {
     try {
       const sheet = this.connectToGoogleSheet('TransactionCategories');
+
+      if (!sheet) {
+        return 0;
+      }
+
       const lastRow = sheet.getLastRow();
 
       if (lastRow <= 1) {
@@ -88,9 +104,9 @@ export class GoogleSheetsService {
       const maxId = Math.max(...ids);
       return maxId + 1;
     } catch (error) {
-      console.error(
-        '❌ Ошибка при получении следующего ID категории:',
-        error instanceof Error ? error.message : String(error),
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка при получении следующего ID категории: ${error instanceof Error ? error.message : String(error)}`,
       );
       return 0;
     }
@@ -99,6 +115,13 @@ export class GoogleSheetsService {
   public addCategory(id: number, name: string, type: string, emoji: string): CategoryResult {
     try {
       const sheet = this.connectToGoogleSheet('TransactionCategories');
+
+      if (!sheet) {
+        return {
+          success: false,
+          error: 'Лист TransactionCategories не найден',
+        };
+      }
 
       // Находим первую свободную строку
       const nextRow = sheet.getLastRow() + 1;
@@ -127,12 +150,16 @@ export class GoogleSheetsService {
     }
   }
 
-  private connectToGoogleSheet(sheetName: string): GoogleAppsScript.Spreadsheet.Sheet {
+  private connectToGoogleSheet(sheetName: string): GoogleAppsScript.Spreadsheet.Sheet | null {
     const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     const sheet = spreadsheet.getSheetByName(sheetName);
 
     if (!sheet) {
-      throw new Error(`Лист "${sheetName}" не найден в таблице`);
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Лист "${sheetName}" не найден в таблице`,
+      );
+      return null;
     }
 
     return sheet;

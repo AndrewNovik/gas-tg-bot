@@ -18,8 +18,6 @@ export class StateManager {
 
   public setUserState(chatId: number, stateType: StateType, data: Record<string, any> = {}): void {
     try {
-      this.sendAdminMessage(`🔧 Попытка установить состояние для ${chatId}`);
-
       const state: UserState = {
         type: stateType,
         data: data,
@@ -29,15 +27,9 @@ export class StateManager {
       const key = `user_state_${chatId}`;
       const stateJson = JSON.stringify(state);
 
-      this.sendAdminMessage(`🔧 Ключ кэша: ${key}`);
-      this.sendAdminMessage(`🔧 Данные для сохранения: ${stateJson}`);
-      this.sendAdminMessage(`🔧 Размер данных: ${stateJson.length} символов`);
-
       // Проверяем, что кэш доступен
       const testKey = `test_${Date.now()}`;
       this.cache.put(testKey, 'test', 60);
-      const testResult = this.cache.get(testKey);
-      this.sendAdminMessage(`🔧 Тест кэша: ${testResult === 'test' ? 'OK' : 'FAILED'}`);
       this.cache.remove(testKey);
 
       this.cache.put(key, stateJson, 3600);
@@ -45,10 +37,6 @@ export class StateManager {
       // Проверяем, что данные сохранились
       const savedData = this.cache.get(key);
       this.sendAdminMessage(`🔧 Проверка сохранения: ${savedData ? 'OK' : 'FAILED'}`);
-      if (savedData) {
-        this.sendAdminMessage(`🔧 Сохраненные данные: ${savedData}`);
-        this.sendAdminMessage(`🔧 Размер сохраненных данных: ${savedData.length} символов`);
-      }
 
       this.sendAdminMessage(`✅ Состояние установлено для ${chatId}: ${stateJson}`);
     } catch (error) {
@@ -59,59 +47,26 @@ export class StateManager {
   }
 
   public getUserState(chatId: number): UserState | null {
-    try {
-      this.sendAdminMessage(`🔍 Попытка получить состояние для ${chatId}`);
+    const key = `user_state_${chatId}`;
 
-      const key = `user_state_${chatId}`;
+    const stateJson = this.cache.get(key);
 
-      this.sendAdminMessage(`🔍 Ключ кэша: ${key}`);
-
-      // Проверяем, что кэш работает
-      const testKey = `test_get_${Date.now()}`;
-      this.cache.put(testKey, 'test_get', 60);
-      const testResult = this.cache.get(testKey);
-      this.sendAdminMessage(
-        `🔍 Тест получения из кэша: ${testResult === 'test_get' ? 'OK' : 'FAILED'}`,
-      );
-      this.cache.remove(testKey);
-
-      const stateJson = this.cache.get(key);
-      this.sendAdminMessage(`🔍 Полученные данные из кэша: ${stateJson ? stateJson : 'null'}`);
-
-      if (stateJson) {
-        try {
-          const state: UserState = JSON.parse(stateJson);
-          this.sendAdminMessage(`✅ Получено состояние для ${chatId}: ${JSON.stringify(state)}`);
-          return state;
-        } catch (error) {
-          this.sendAdminMessage(
-            `❌ Ошибка парсинга состояния для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
-          );
-          return null;
-        }
-      }
-
-      this.sendAdminMessage(`❌ Состояние для ${chatId} не найдено в кэше`);
-      return null;
-    } catch (error) {
-      this.sendAdminMessage(
-        `❌ Ошибка в getUserState для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      return null;
+    if (stateJson) {
+      return JSON.parse(stateJson);
     }
+
+    this.sendAdminMessage(`❌ Состояние для ${chatId} не найдено в кэше`);
+    return null;
   }
 
   public isUserInState(chatId: number, stateType: StateType): boolean {
     const state = this.getUserState(chatId);
-    const result = Boolean(state && state.type === stateType);
-    this.sendAdminMessage(`🔍 isUserInState(${chatId}, ${stateType}): ${result}`);
-    return result;
+    return Boolean(state && state.type === stateType);
   }
 
   public clearUserState(chatId: number): void {
     const key = `user_state_${chatId}`;
     this.cache.remove(key);
-    this.sendAdminMessage(`🧹 Состояние очищено для ${chatId}`);
   }
 
   public updateUserStateData(chatId: number, newData: Record<string, any>): void {
@@ -123,8 +78,6 @@ export class StateManager {
 
       const key = `user_state_${chatId}`;
       this.cache.put(key, JSON.stringify(state), 3600);
-
-      this.sendAdminMessage(`🔄 Состояние обновлено для ${chatId}: ${JSON.stringify(state)}`);
     } else {
       this.sendAdminMessage(`❌ Не удалось обновить состояние для ${chatId}: состояние не найдено`);
     }
@@ -138,10 +91,7 @@ export class StateManager {
       state.timestamp = new Date().getTime();
 
       const key = `user_state_${chatId}`;
-      this.cache.put(key, JSON.stringify(state), 3600);
-
-      this.sendAdminMessage(`🔄 Тип состояния обновлен для ${chatId}: ${newType}`);
-      this.sendAdminMessage(`🔄 Полное состояние: ${JSON.stringify(state)}`);
+      this.cache.put(key, JSON.stringify(state), 300);
     } else {
       this.sendAdminMessage(
         `❌ Не удалось обновить тип состояния для ${chatId}: состояние не найдено`,
@@ -169,7 +119,9 @@ export class StateManager {
 
       UrlFetchApp.fetch(url, options);
     } catch (error) {
-      console.error('Ошибка отправки сообщения админу:', error);
+      throw new Error(
+        `❌ Ошибка в sendAdminMessage: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 }

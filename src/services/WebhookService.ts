@@ -38,23 +38,8 @@ export class WebhookService {
         console.log(`❌ Ошибка установки webhook: ${result.description}`);
       }
     } catch (error) {
-      console.error(
+      console.log(
         '❌ Критическая ошибка при установке webhook:',
-        error instanceof Error ? error.message : String(error),
-      );
-    }
-  }
-
-  public getWebhookInfo(): void {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/getWebhookInfo`;
-
-    try {
-      const response = UrlFetchApp.fetch(url);
-      const result = JSON.parse(response.getContentText());
-      console.log('Информация о вебхуке:', JSON.stringify(result, null, 2));
-    } catch (error) {
-      console.error(
-        '❌ Критическая ошибка при получении информации о webhook:',
         error instanceof Error ? error.message : String(error),
       );
     }

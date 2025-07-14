@@ -94,10 +94,6 @@ export class QueryCommandsController {
         Number(CONFIG.ADMIN_ID),
         `❌ Ошибка в handleCategoryTypeSelection для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
       );
-      this.messageService.sendText(
-        chatId,
-        `❌ Произошла ошибка при выборе типа: ${error instanceof Error ? error.message : String(error)}`,
-      );
     }
   }
 
@@ -126,16 +122,13 @@ export class QueryCommandsController {
       const response = UrlFetchApp.fetch(url, options);
       const result = JSON.parse(response.getContentText());
 
-      if (!result.ok) {
-        console.error('❌ Ошибка answerCallbackQuery:', result.description);
-      }
-
       return result;
     } catch (error) {
-      console.error(
-        '❌ Критическая ошибка answerCallbackQuery:',
-        error instanceof Error ? error.message : String(error),
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Критическая ошибка answerCallbackQuery: ${error instanceof Error ? error.message : String(error)}`,
       );
+
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
     }
   }

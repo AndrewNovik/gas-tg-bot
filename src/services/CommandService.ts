@@ -1,7 +1,13 @@
 import { CONFIG } from '../config';
 import { BotCommand } from '../types';
+import { MessageService } from './MessageService';
 export class CommandService {
   private static instance: CommandService;
+  private messageService: MessageService;
+
+  private constructor() {
+    this.messageService = MessageService.getInstance();
+  }
 
   public static getInstance(): CommandService {
     if (!CommandService.instance) {
@@ -12,6 +18,14 @@ export class CommandService {
 
   public setupBotCommands(): void {
     const commands: BotCommand[] = [
+      {
+        command: 'addtransaction',
+        description: 'Добавить новую транзакцию в таблицу',
+      },
+      {
+        command: 'addcategory',
+        description: 'Добавить новую категорию транзакций',
+      },
       {
         command: 'start',
         description: 'Приветствие и краткое описание функционала',
@@ -24,21 +38,16 @@ export class CommandService {
         command: 'menu',
         description: 'Основное меню с кнопками быстрого доступа',
       },
-      {
-        command: 'add',
-        description: 'Добавить новую транзакцию в таблицу',
-      },
-      {
-        command: 'addcategory',
-        description: 'Добавить новую категорию транзакций',
-      },
     ];
 
     // Валидация команд
     const validationErrors = this.validateCommands(commands);
     if (validationErrors.length > 0) {
-      console.error('❌ Ошибки валидации команд:');
-      validationErrors.forEach((error) => console.error(`  - ${error}`));
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка установки команд: ${validationErrors.join('\n')}`,
+      );
+
       return;
     }
 
@@ -59,48 +68,10 @@ export class CommandService {
 
       if (result.ok) {
         console.log('✅ Команды бота успешно установлены!');
-        console.log('Доступные команды:');
-        commands.forEach((cmd) => {
-          console.log(`/${cmd.command} - ${cmd.description}`);
-        });
-      } else {
-        console.error('❌ Ошибка установки команд:', result.description);
       }
     } catch (error) {
       console.error(
         '❌ Критическая ошибка при установке команд:',
-        error instanceof Error ? error.message : String(error),
-      );
-    }
-  }
-
-  public getBotCommands(): void {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/getMyCommands`;
-
-    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: 'get',
-      muteHttpExceptions: true,
-    };
-
-    try {
-      const response = UrlFetchApp.fetch(url, options);
-      const result = JSON.parse(response.getContentText());
-
-      if (result.ok) {
-        console.log('📋 Установленные команды:');
-        if (result.result.length === 0) {
-          console.log('Команды не установлены');
-        } else {
-          result.result.forEach((cmd: BotCommand) => {
-            console.log(`/${cmd.command} - ${cmd.description}`);
-          });
-        }
-      } else {
-        console.error('❌ Ошибка получения команд:', result.description);
-      }
-    } catch (error) {
-      console.error(
-        '❌ Критическая ошибка при получении команд:',
         error instanceof Error ? error.message : String(error),
       );
     }
@@ -120,8 +91,6 @@ export class CommandService {
 
       if (result.ok) {
         console.log('✅ Все команды бота удалены');
-      } else {
-        console.error('❌ Ошибка удаления команд:', result.description);
       }
     } catch (error) {
       console.error(
