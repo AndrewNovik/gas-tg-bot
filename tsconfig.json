@@ -21,12 +21,17 @@
       "@webhooks/*": ["webhooks/*"],
       "@google-sheets/*": ["google-sheets/*"],
       "@config/*": ["config/*"],
+      "@telegram-api/*": ["telegram-api/*"],
+      "@shared/*": ["shared/*"],
       "@commands": ["commands"],
       "@messages": ["messages"],
       "@state": ["state"],
       "@webhooks": ["webhooks"],
       "@google-sheets": ["google-sheets"],
-      "@config": ["config"]
+      "@config": ["config"],
+      "@telegram-api": ["telegram-api"],
+      "@shared": ["shared"],
+      "@shared": ["shared"]
     }
   },
   "include": ["src/**/*.ts"],

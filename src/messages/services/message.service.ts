@@ -1,10 +1,10 @@
 import { CONFIG } from '@config';
 import { ApiResponse } from '@messages/interfaces';
+import { KeyboardCallBackType } from '@messages/interfaces/messages.interfaces';
+import { AbstractClassService } from '@shared';
 
-export class MessageService {
+export class MessageService implements AbstractClassService<MessageService> {
   private static instance: MessageService;
-
-  private constructor() {}
 
   public static getInstance(): MessageService {
     if (!MessageService.instance) {
@@ -127,6 +127,36 @@ export class MessageService {
       const result = JSON.parse(response.getContentText());
 
       return result;
+    } catch (error) {
+      return { ok: false, description: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  public sendKeyboard(
+    chatId: number,
+    messageText: string,
+    keyBoardButtonText: string,
+    keyboardCallBack: KeyboardCallBackType,
+  ): ApiResponse {
+    const keyboard = {
+      inline_keyboard: [[{ text: `${keyBoardButtonText}`, callback_data: `${keyboardCallBack}` }]],
+    };
+    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
+    const payload = {
+      chat_id: chatId,
+      text: messageText,
+      parse_mode: 'HTML',
+      reply_markup: JSON.stringify(keyboard),
+    };
+    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+      method: 'post',
+      headers: { 'Content-Type': 'application/json' },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true,
+    };
+    try {
+      const response = UrlFetchApp.fetch(url, options);
+      return JSON.parse(response.getContentText());
     } catch (error) {
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
     }

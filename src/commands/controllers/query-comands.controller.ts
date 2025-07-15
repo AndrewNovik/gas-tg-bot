@@ -2,8 +2,11 @@ import { CONFIG } from '@config';
 import { CategoryType } from '@commands/interfaces';
 import { StateManager } from '@state';
 import { MessageService } from '@messages';
+import { CallbackQuery } from '@telegram-api';
+import { AbstractClassService } from '@shared';
+import { StepsType } from '@state/interfaces';
 
-export class QueryCommandsController {
+export class QueryCommandsController implements AbstractClassService<QueryCommandsController> {
   private static instance: QueryCommandsController;
   private stateManager: StateManager;
   private messageService: MessageService;
@@ -20,7 +23,12 @@ export class QueryCommandsController {
     return QueryCommandsController.instance;
   }
 
-  public handleQueryCommand(query: any): void {
+  public handleQueryCommand(query: CallbackQuery): void {
+    // Проверяем, что есть сообщение
+    if (!query.message) {
+      return;
+    }
+
     const chatId = query.message.chat.id;
     const data = query.data;
     const firstName = query.from.first_name;
@@ -50,15 +58,21 @@ export class QueryCommandsController {
 
       // Обработка типов категорий
       case 'category_type_income':
-        this.handleCategoryTypeSelection(chatId, CategoryType.INCOME);
+        if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_TYPE)) {
+          this.handleCategoryTypeSelection(chatId, CategoryType.INCOME);
+        }
         break;
 
       case 'category_type_expense':
-        this.handleCategoryTypeSelection(chatId, CategoryType.EXPENSE);
+        if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_TYPE)) {
+          this.handleCategoryTypeSelection(chatId, CategoryType.EXPENSE);
+        }
         break;
 
       case 'category_type_transfer':
-        this.handleCategoryTypeSelection(chatId, CategoryType.TRANSFER);
+        if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_TYPE)) {
+          this.handleCategoryTypeSelection(chatId, CategoryType.TRANSFER);
+        }
         break;
 
       case 'cancel_add_category':
@@ -76,7 +90,7 @@ export class QueryCommandsController {
       this.stateManager.updateUserStateData(chatId, { type: type });
 
       // Переходим к вводу эмодзи (обновляем только тип, сохраняя данные)
-      this.stateManager.updateUserStateType(chatId, 'adding_category_emoji' as any);
+      this.stateManager.updateUserStep(chatId, 'adding_category_emoji' as any);
 
       const typeNames = {
         [CategoryType.INCOME]: 'Доход',

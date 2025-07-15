@@ -1,8 +1,9 @@
 import { CONFIG } from '@config';
 import { MessageService } from '@messages';
 import { TransactionResult, CategoryResult } from '@google-sheets/interfaces';
+import { AbstractClassService } from '@shared';
 
-export class GoogleSheetsService {
+export class GoogleSheetsService implements AbstractClassService<GoogleSheetsService> {
   private static instance: GoogleSheetsService;
   private messageService: MessageService;
 

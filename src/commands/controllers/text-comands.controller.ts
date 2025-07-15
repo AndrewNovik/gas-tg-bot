@@ -1,14 +1,16 @@
 import { CONFIG } from '@config';
-import { StateType, StateManager } from '@state';
+import { StepsType, StateManager } from '@state';
 import { CategoryType } from '@commands/interfaces';
 import { MessageService } from '@messages';
 import { GoogleSheetsService } from '@google-sheets';
+import { Message } from '@telegram-api';
+import { AbstractClassService } from '@shared';
 
-export class TextCommandsController {
+export class TextCommandsController implements AbstractClassService<TextCommandsController> {
   private static instance: TextCommandsController;
-  private stateManager: StateManager;
-  private messageService: MessageService;
-  private googleSheetsService: GoogleSheetsService;
+  private readonly stateManager: StateManager;
+  private readonly messageService: MessageService;
+  private readonly googleSheetsService: GoogleSheetsService;
 
   private constructor() {
     this.stateManager = StateManager.getInstance();
@@ -23,10 +25,15 @@ export class TextCommandsController {
     return TextCommandsController.instance;
   }
 
-  public handleTextCommand(message: any): void {
+  public handleTextCommand(message: Message): void {
     const chatId = message.chat.id;
     const text = message.text;
-    const firstName = message.from.first_name;
+    const firstName = message.from?.first_name || 'Пользователь';
+
+    // Если нет текста, выходим
+    if (!text) {
+      return;
+    }
 
     switch (text) {
       case '/start':
@@ -56,9 +63,9 @@ export class TextCommandsController {
         // Проверяем, находится ли пользователь в процессе добавления категории
         const currentState = this.stateManager.getUserState(chatId);
 
-        if (this.stateManager.isUserInState(chatId, StateType.ADDING_CATEGORY_NAME)) {
+        if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_NAME)) {
           this.handleCategoryNameInput(chatId, text);
-        } else if (this.stateManager.isUserInState(chatId, StateType.ADDING_CATEGORY_EMOJI)) {
+        } else if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_EMOJI)) {
           this.handleCategoryEmojiInput(chatId, text);
         } else {
           // Эхо-ответ
@@ -104,14 +111,20 @@ export class TextCommandsController {
   }
 
   private handleAddCategoryStart(chatId: number, firstName: string): void {
+    if (this.stateManager.isUserInCache(chatId)) {
+      this.stateManager.clearUserState(chatId);
+    }
+
     try {
       // Получаем следующий ID для категории
       const nextId = this.googleSheetsService.getNextCategoryId();
 
       // Устанавливаем состояние пользователя
-      this.stateManager.setUserState(chatId, StateType.ADDING_CATEGORY_NAME, {
-        categoryId: nextId,
-      });
+      this.stateManager.setUserState(chatId, StepsType.ADDING_CATEGORY_START);
+
+      // this.stateManager.setUserState(chatId, StepsType.ADDED_CATEGORY_NAME, {
+      //   categoryId: nextId,
+      // });
 
       const message = `📝 Введите название категории:`;
 
@@ -130,9 +143,9 @@ export class TextCommandsController {
       this.stateManager.updateUserStateData(chatId, { name: name });
 
       // Переходим к выбору типа (обновляем только тип, сохраняя данные)
-      this.stateManager.updateUserStateType(chatId, StateType.ADDING_CATEGORY_TYPE);
+      this.stateManager.updateUserStep(chatId, StepsType.ADDED_CATEGORY_TYPE);
 
-      const message = `✅ Название: "${name}"\n\n` + `📂 Теперь выберите тип категории:`;
+      const message = `✅ Название сохранено: "${name}"`;
 
       this.messageService.sendText(chatId, message);
       this.messageService.sendCategoryTypeKeyboard(chatId);

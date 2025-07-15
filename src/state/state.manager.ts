@@ -1,5 +1,5 @@
 import { CONFIG } from '@config';
-import { UserState, StateType } from '@state/interfaces';
+import { UserState, StepsType } from '@state/interfaces';
 
 export class StateManager {
   private static instance: StateManager;
@@ -16,29 +16,18 @@ export class StateManager {
     return StateManager.instance;
   }
 
-  public setUserState(chatId: number, stateType: StateType, data: Record<string, any> = {}): void {
+  public setUserState(chatId: number, step: StepsType, data?: Record<string, any>): void {
     try {
       const state: UserState = {
-        type: stateType,
-        data: data,
+        step: step,
+        data: data || {},
         timestamp: new Date().getTime(),
       };
 
       const key = `user_state_${chatId}`;
       const stateJson = JSON.stringify(state);
 
-      // Проверяем, что кэш доступен
-      const testKey = `test_${Date.now()}`;
-      this.cache.put(testKey, 'test', 60);
-      this.cache.remove(testKey);
-
-      this.cache.put(key, stateJson, 3600);
-
-      // Проверяем, что данные сохранились
-      const savedData = this.cache.get(key);
-      this.sendAdminMessage(`🔧 Проверка сохранения: ${savedData ? 'OK' : 'FAILED'}`);
-
-      this.sendAdminMessage(`✅ Состояние установлено для ${chatId}: ${stateJson}`);
+      this.cache.put(key, stateJson, 300);
     } catch (error) {
       this.sendAdminMessage(
         `❌ Ошибка в setUserState для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
@@ -47,7 +36,7 @@ export class StateManager {
   }
 
   public getUserState(chatId: number): UserState | null {
-    const key = `user_state_${chatId}`;
+    const key = `user_state_ ${chatId}`;
 
     const stateJson = this.cache.get(key);
 
@@ -59,9 +48,14 @@ export class StateManager {
     return null;
   }
 
-  public isUserInState(chatId: number, stateType: StateType): boolean {
+  public isUserInSteps(chatId: number, step?: StepsType): boolean {
     const state = this.getUserState(chatId);
-    return Boolean(state && state.type === stateType);
+    return Boolean(state && step && step in StepsType);
+  }
+
+  public isUserInCache(chatId: number): boolean {
+    const key = `user_state_${chatId}`;
+    return this.cache.get(key) !== null;
   }
 
   public clearUserState(chatId: number): void {
@@ -77,17 +71,17 @@ export class StateManager {
       state.timestamp = new Date().getTime();
 
       const key = `user_state_${chatId}`;
-      this.cache.put(key, JSON.stringify(state), 3600);
+      this.cache.put(key, JSON.stringify(state), 300);
     } else {
       this.sendAdminMessage(`❌ Не удалось обновить состояние для ${chatId}: состояние не найдено`);
     }
   }
 
-  public updateUserStateType(chatId: number, newType: StateType): void {
+  public updateUserStep(chatId: number, newStep: StepsType): void {
     const state = this.getUserState(chatId);
     if (state) {
       // Обновляем только тип состояния, сохраняя все данные
-      state.type = newType;
+      state.step = newStep;
       state.timestamp = new Date().getTime();
 
       const key = `user_state_${chatId}`;

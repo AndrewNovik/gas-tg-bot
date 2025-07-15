@@ -1,8 +1,9 @@
 import { CONFIG } from '@config';
 import { BotCommand } from '@commands/interfaces';
 import { MessageService } from '@messages';
+import { AbstractClassService } from '@shared';
 
-export class CommandService {
+export class CommandService implements AbstractClassService<CommandService> {
   private static instance: CommandService;
   private messageService: MessageService;
 

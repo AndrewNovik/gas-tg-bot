@@ -1,1 +1,1 @@
-export { StateType, UserState } from '@state/interfaces/state.interface';
+export { StepsType, UserState } from '@state/interfaces/state.interface';

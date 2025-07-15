@@ -6,6 +6,7 @@ import { CommandService } from '@commands';
 import { WebhookService } from '@webhooks';
 import { GoogleSheetsService } from '@google-sheets';
 import { TextCommandsController, QueryCommandsController } from '@commands';
+import { Update } from '@telegram-api';
 
 // Инициализация сервисов
 const stateManager = StateManager.getInstance();
@@ -27,7 +28,7 @@ function startBot() {
 }
 
 function doPost(e: any) {
-  const update = JSON.parse(e.postData.contents);
+  const update: Update = JSON.parse(e.postData.contents);
 
   // Обработка текстовых сообщений
   if (update?.message?.text) {
@@ -48,4 +49,6 @@ function doGet() {
 // Явный экспорт в глобальную область видимости для GAS
 (function (global: any) {
   global.startBot = startBot;
+  global.doPost = doPost;
+  global.doGet = doGet;
 })(globalThis);
