@@ -1,8 +1,8 @@
-import { CONFIG } from '../config';
-import { StateType, CategoryType } from '../types';
-import { StateManager } from '../services/StateManager';
-import { MessageService } from '../services/MessageService';
-import { GoogleSheetsService } from '../services/GoogleSheetsService';
+import { CONFIG } from '@config';
+import { StateType, StateManager } from '@state';
+import { CategoryType } from '@commands/interfaces';
+import { MessageService } from '@messages';
+import { GoogleSheetsService } from '@google-sheets';
 
 export class TextCommandsController {
   private static instance: TextCommandsController;

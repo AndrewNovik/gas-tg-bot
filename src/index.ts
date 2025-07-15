@@ -1,12 +1,11 @@
 // Главный файл для сборки в bundle.js
 // Импортируем все необходимые модули
-import { StateManager } from './services/StateManager';
-import { MessageService } from './services/MessageService';
-import { CommandService } from './services/CommandService';
-import { WebhookService } from './services/WebhookService';
-import { GoogleSheetsService } from './services/GoogleSheetsService';
-import { TextCommandsController } from './controllers/TextCommandsController';
-import { QueryCommandsController } from './controllers/QueryCommandsController';
+import { StateManager } from '@state';
+import { MessageService } from '@messages';
+import { CommandService } from '@commands';
+import { WebhookService } from '@webhooks';
+import { GoogleSheetsService } from '@google-sheets';
+import { TextCommandsController, QueryCommandsController } from '@commands';
 
 // Инициализация сервисов
 const stateManager = StateManager.getInstance();

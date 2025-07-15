@@ -12,7 +12,22 @@
     "sourceMap": false,
     "removeComments": false,
     "noImplicitAny": false,
-    "allowJs": true
+    "allowJs": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@commands/*": ["commands/*"],
+      "@messages/*": ["messages/*"],
+      "@state/*": ["state/*"],
+      "@webhooks/*": ["webhooks/*"],
+      "@google-sheets/*": ["google-sheets/*"],
+      "@config/*": ["config/*"],
+      "@commands": ["commands"],
+      "@messages": ["messages"],
+      "@state": ["state"],
+      "@webhooks": ["webhooks"],
+      "@google-sheets": ["google-sheets"],
+      "@config": ["config"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

@@ -1,7 +1,7 @@
-import { CONFIG } from '../config';
-import { CategoryType } from '../types';
-import { StateManager } from '../services/StateManager';
-import { MessageService } from '../services/MessageService';
+import { CONFIG } from '@config';
+import { CategoryType } from '@commands/interfaces';
+import { StateManager } from '@state';
+import { MessageService } from '@messages';
 
 export class QueryCommandsController {
   private static instance: QueryCommandsController;

@@ -1,5 +1,5 @@
-import { CONFIG } from '../config';
-import { ApiResponse } from '../types';
+import { CONFIG } from '@config';
+import { ApiResponse } from '@messages/interfaces';
 
 export class MessageService {
   private static instance: MessageService;

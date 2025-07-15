@@ -1,5 +1,5 @@
-import { UserState, StateType } from '../types';
-import { CONFIG } from '../config';
+import { CONFIG } from '@config';
+import { UserState, StateType } from '@state/interfaces';
 
 export class StateManager {
   private static instance: StateManager;

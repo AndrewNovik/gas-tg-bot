@@ -1,19 +1,6 @@
-import { CONFIG } from '../config';
-import { MessageService } from './MessageService';
-
-export interface TransactionResult {
-  success: boolean;
-  data?: [string, string, string, number, string];
-  row?: number;
-  error?: string;
-}
-
-export interface CategoryResult {
-  success: boolean;
-  data?: [number, string, string, string];
-  row?: number;
-  error?: string;
-}
+import { CONFIG } from '@config';
+import { MessageService } from '@messages';
+import { TransactionResult, CategoryResult } from '@google-sheets/interfaces';
 
 export class GoogleSheetsService {
   private static instance: GoogleSheetsService;

@@ -1,4 +1,4 @@
-import { CONFIG } from '../config';
+import { CONFIG } from '@config';
 
 export class WebhookService {
   private static instance: WebhookService;

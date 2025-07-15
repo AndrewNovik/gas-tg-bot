@@ -1,6 +1,7 @@
-import { CONFIG } from '../config';
-import { BotCommand } from '../types';
-import { MessageService } from './MessageService';
+import { CONFIG } from '@config';
+import { BotCommand } from '@commands/interfaces';
+import { MessageService } from '@messages';
+
 export class CommandService {
   private static instance: CommandService;
   private messageService: MessageService;
