@@ -1,10 +1,14 @@
 import { CONFIG } from '@config';
-import { CategoryType } from '@commands/interfaces';
-import { StateManager } from '@state';
+import {
+  StateManager,
+  CategoryAddStepsCallBack,
+  CategoryTypeCallBack,
+  KeyboardCancelCallBack,
+} from '@state';
 import { MessageService } from '@messages';
 import { CallbackQuery } from '@telegram-api';
 import { AbstractClassService } from '@shared';
-import { StepsType } from '@state/interfaces';
+import { USERS_ID } from '@commands/consts';
 
 export class QueryCommandsController implements AbstractClassService<QueryCommandsController> {
   private static instance: QueryCommandsController;
@@ -29,12 +33,21 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
       return;
     }
 
+    if (!USERS_ID.includes(query.message.chat.id)) {
+      this.messageService.sendText(query.message.chat.id, 'У вас нет доступа к этому боту');
+      return;
+    }
+
     const chatId = query.message.chat.id;
     const data = query.data;
     const firstName = query.from.first_name;
 
     // Ответ на callback - ОБЯЗАТЕЛЬНО в течение 10 секунд
     this.answerCallbackQuery(query.id);
+
+    this.messageService.sendText(chatId, JSON.stringify(query.data));
+    const state = this.stateManager.getUserState(chatId);
+    this.messageService.sendText(chatId, JSON.stringify(state));
 
     switch (data) {
       case 'start':
@@ -57,25 +70,25 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
         break;
 
       // Обработка типов категорий
-      case 'category_type_income':
-        if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_TYPE)) {
-          this.handleCategoryTypeSelection(chatId, CategoryType.INCOME);
+      case CategoryTypeCallBack.INCOME:
+        if (this.stateManager.isUserInSteps(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_TYPE)) {
+          this.handleCategoryTypeSelection(chatId, CategoryTypeCallBack.INCOME);
         }
         break;
 
-      case 'category_type_expense':
-        if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_TYPE)) {
-          this.handleCategoryTypeSelection(chatId, CategoryType.EXPENSE);
+      case CategoryTypeCallBack.EXPENSE:
+        if (this.stateManager.isUserInSteps(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_TYPE)) {
+          this.handleCategoryTypeSelection(chatId, CategoryTypeCallBack.EXPENSE);
         }
         break;
 
-      case 'category_type_transfer':
-        if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_TYPE)) {
-          this.handleCategoryTypeSelection(chatId, CategoryType.TRANSFER);
+      case CategoryTypeCallBack.TRANSFER:
+        if (this.stateManager.isUserInSteps(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_TYPE)) {
+          this.handleCategoryTypeSelection(chatId, CategoryTypeCallBack.TRANSFER);
         }
         break;
 
-      case 'cancel_add_category':
+      case KeyboardCancelCallBack.CANCEL_STEPS:
         this.handleCancelAddCategory(chatId);
         break;
 
@@ -84,23 +97,21 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
     }
   }
 
-  private handleCategoryTypeSelection(chatId: number, type: CategoryType): void {
+  private handleCategoryTypeSelection(chatId: number, type: CategoryTypeCallBack): void {
     try {
       // Обновляем состояние с типом
       this.stateManager.updateUserStateData(chatId, { type: type });
 
       // Переходим к вводу эмодзи (обновляем только тип, сохраняя данные)
-      this.stateManager.updateUserStep(chatId, 'adding_category_emoji' as any);
+      this.stateManager.updateUserStep(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_EMOJI);
 
       const typeNames = {
-        [CategoryType.INCOME]: 'Доход',
-        [CategoryType.EXPENSE]: 'Расход',
-        [CategoryType.TRANSFER]: 'Перевод',
+        [CategoryTypeCallBack.INCOME]: 'Доход',
+        [CategoryTypeCallBack.EXPENSE]: 'Расход',
+        [CategoryTypeCallBack.TRANSFER]: 'Перевод',
       };
 
-      const message =
-        `✅ Тип: ${typeNames[type]}\n\n` +
-        `😊 Теперь введите эмодзи для категории (например: 🍕, 🚗, 📚):`;
+      const message = `✅ Тип: ${typeNames[type]}\n\n` + `😊 Теперь введите эмодзи для категории:`;
 
       this.messageService.sendText(chatId, message);
     } catch (error) {

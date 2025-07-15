@@ -1,5 +1,5 @@
 import { CONFIG } from '@config';
-import { BotCommand } from '@commands/interfaces';
+import { BotCommand } from '@commands';
 import { MessageService } from '@messages';
 import { AbstractClassService } from '@shared';
 

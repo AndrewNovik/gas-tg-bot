@@ -100,7 +100,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     }
   }
 
-  public addCategory(id: number, name: string, type: string, emoji: string): CategoryResult {
+  public addCategory(name: string, type: string, emoji: string): CategoryResult {
     try {
       const sheet = this.connectToGoogleSheet('TransactionCategories');
 
@@ -116,7 +116,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
 
       // Подготавливаем данные для записи
       const rowData: [number, string, string, string] = [
-        id, // ID
+        this.getNextCategoryId(), // ID
         name, // Название
         type, // Тип (income/expense/transfer)
         emoji, // Эмодзи

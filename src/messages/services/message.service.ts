@@ -1,7 +1,7 @@
 import { CONFIG } from '@config';
-import { ApiResponse } from '@messages/interfaces';
-import { KeyboardCallBackType } from '@messages/interfaces/messages.interfaces';
+import { ApiResponse } from '@messages';
 import { AbstractClassService } from '@shared';
+import { CategoryTypeCallBack, KeyboardCancelCallBack, Keyboard } from '@state';
 
 export class MessageService implements AbstractClassService<MessageService> {
   private static instance: MessageService;
@@ -75,14 +75,14 @@ export class MessageService implements AbstractClassService<MessageService> {
   }
 
   public sendCategoryTypeKeyboard(chatId: number): ApiResponse {
-    const keyboard = {
+    const keyboard: Keyboard = {
       inline_keyboard: [
         [
-          { text: '💰 Доход', callback_data: 'category_type_income' },
-          { text: '💸 Расход', callback_data: 'category_type_expense' },
+          { text: '💰 Доход', callback_data: CategoryTypeCallBack.INCOME },
+          { text: '💸 Расход', callback_data: CategoryTypeCallBack.EXPENSE },
         ],
-        [{ text: '🔄 Перевод', callback_data: 'category_type_transfer' }],
-        [{ text: '❌ Отмена', callback_data: 'cancel_add_category' }],
+        [{ text: '🔄 Перевод', callback_data: CategoryTypeCallBack.TRANSFER }],
+        [{ text: '❌ Отмена', callback_data: KeyboardCancelCallBack.CANCEL_STEPS }],
       ],
     };
     const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
@@ -132,15 +132,7 @@ export class MessageService implements AbstractClassService<MessageService> {
     }
   }
 
-  public sendKeyboard(
-    chatId: number,
-    messageText: string,
-    keyBoardButtonText: string,
-    keyboardCallBack: KeyboardCallBackType,
-  ): ApiResponse {
-    const keyboard = {
-      inline_keyboard: [[{ text: `${keyBoardButtonText}`, callback_data: `${keyboardCallBack}` }]],
-    };
+  public sendKeyboard(chatId: number, messageText: string, keyboard: Keyboard): ApiResponse {
     const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
     const payload = {
       chat_id: chatId,

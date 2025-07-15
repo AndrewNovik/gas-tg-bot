@@ -1,13 +1,9 @@
-export enum CategoryType {
-  INCOME = 'income',
-  EXPENSE = 'expense',
-  TRANSFER = 'transfer',
-}
+import { CategoryTypeCallBack } from '@state';
 
 export interface Category {
   id: number;
   name: string;
-  type: CategoryType;
+  type: CategoryTypeCallBack;
   emoji: string;
 }
 

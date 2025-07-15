@@ -5,7 +5,3 @@ export interface ApiResponse {
   description?: string;
   error_code?: number;
 }
-
-export enum KeyboardCallBackType {
-  CANCEL_STEPS = 'cancel_steps',
-}

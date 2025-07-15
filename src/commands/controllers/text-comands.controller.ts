@@ -1,11 +1,17 @@
 import { CONFIG } from '@config';
-import { StepsType, StateManager } from '@state';
-import { CategoryType } from '@commands/interfaces';
+import {
+  Keyboard,
+  StateManager,
+  CategoryAddStepsCallBack,
+  CategoryTypeCallBack,
+  KeyboardCancelCallBack,
+  UserState,
+} from '@state';
 import { MessageService } from '@messages';
 import { GoogleSheetsService } from '@google-sheets';
 import { Message } from '@telegram-api';
 import { AbstractClassService } from '@shared';
-
+import { CategoryType, USERS_ID } from '@commands';
 export class TextCommandsController implements AbstractClassService<TextCommandsController> {
   private static instance: TextCommandsController;
   private readonly stateManager: StateManager;
@@ -29,6 +35,11 @@ export class TextCommandsController implements AbstractClassService<TextCommands
     const chatId = message.chat.id;
     const text = message.text;
     const firstName = message.from?.first_name || 'Пользователь';
+
+    if (!USERS_ID.includes(chatId)) {
+      this.messageService.sendText(chatId, 'У вас нет доступа к этому боту');
+      return;
+    }
 
     // Если нет текста, выходим
     if (!text) {
@@ -62,10 +73,23 @@ export class TextCommandsController implements AbstractClassService<TextCommands
       default:
         // Проверяем, находится ли пользователь в процессе добавления категории
         const currentState = this.stateManager.getUserState(chatId);
+        this.messageService.sendText(chatId, JSON.stringify(currentState));
+        if (currentState) {
+          if (currentState.step === CategoryAddStepsCallBack.ADD_CATEGORY_NAME) {
+            this.handleCategoryNameInput(chatId, text);
+            return;
+          }
+          if (currentState.step === CategoryAddStepsCallBack.ADD_CATEGORY_EMOJI) {
+            this.handleCategoryEmojiInput(chatId, text);
+            return;
+          }
+        }
 
-        if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_NAME)) {
+        if (this.stateManager.isUserInSteps(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_NAME)) {
           this.handleCategoryNameInput(chatId, text);
-        } else if (this.stateManager.isUserInSteps(chatId, StepsType.ADDED_CATEGORY_EMOJI)) {
+        } else if (
+          this.stateManager.isUserInSteps(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_EMOJI)
+        ) {
           this.handleCategoryEmojiInput(chatId, text);
         } else {
           // Эхо-ответ
@@ -116,15 +140,8 @@ export class TextCommandsController implements AbstractClassService<TextCommands
     }
 
     try {
-      // Получаем следующий ID для категории
-      const nextId = this.googleSheetsService.getNextCategoryId();
-
       // Устанавливаем состояние пользователя
-      this.stateManager.setUserState(chatId, StepsType.ADDING_CATEGORY_START);
-
-      // this.stateManager.setUserState(chatId, StepsType.ADDED_CATEGORY_NAME, {
-      //   categoryId: nextId,
-      // });
+      this.stateManager.setUserState(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_NAME);
 
       const message = `📝 Введите название категории:`;
 
@@ -139,16 +156,34 @@ export class TextCommandsController implements AbstractClassService<TextCommands
 
   private handleCategoryNameInput(chatId: number, name: string): void {
     try {
+      const state = this.stateManager.getUserState(chatId);
+      if (!state) {
+        this.messageService.sendText(
+          chatId,
+          '❌ Состояние пользователя не найдено. Начните заново с /addcategory',
+        );
+        return;
+      }
       // Обновляем состояние с названием
       this.stateManager.updateUserStateData(chatId, { name: name });
 
       // Переходим к выбору типа (обновляем только тип, сохраняя данные)
-      this.stateManager.updateUserStep(chatId, StepsType.ADDED_CATEGORY_TYPE);
+      this.stateManager.updateUserStep(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_TYPE);
 
       const message = `✅ Название сохранено: "${name}"`;
 
-      this.messageService.sendText(chatId, message);
-      this.messageService.sendCategoryTypeKeyboard(chatId);
+      const keyboard: Keyboard = {
+        inline_keyboard: [
+          [
+            { text: '💰 Доход', callback_data: CategoryTypeCallBack.INCOME },
+            { text: '💸 Расход', callback_data: CategoryTypeCallBack.EXPENSE },
+            { text: '🔄 Перевод', callback_data: CategoryTypeCallBack.TRANSFER },
+          ],
+          [{ text: '❌ Отмена', callback_data: KeyboardCancelCallBack.CANCEL_STEPS }],
+        ],
+      };
+
+      this.messageService.sendKeyboard(chatId, message, keyboard);
     } catch (error) {
       this.messageService.sendText(
         Number(CONFIG.ADMIN_ID),
@@ -159,7 +194,7 @@ export class TextCommandsController implements AbstractClassService<TextCommands
 
   private handleCategoryEmojiInput(chatId: number, emoji: string): void {
     try {
-      const state = this.stateManager.getUserState(chatId);
+      const state: UserState | null = this.stateManager.getUserState(chatId);
       if (!state) {
         this.messageService.sendText(
           chatId,
@@ -167,23 +202,23 @@ export class TextCommandsController implements AbstractClassService<TextCommands
         );
         return;
       }
+      this.messageService.sendText(chatId, JSON.stringify(state));
+      const { name, type } = state.data;
 
-      const { categoryId, name, type } = state.data;
+      const typeNames: Record<string, string> = {
+        [CategoryTypeCallBack.INCOME]: CategoryType.INCOME,
+        [CategoryTypeCallBack.EXPENSE]: CategoryType.EXPENSE,
+        [CategoryTypeCallBack.TRANSFER]: CategoryType.TRANSFER,
+      };
 
       // Добавляем категорию в Google Sheets
-      const result = this.googleSheetsService.addCategory(categoryId, name, type, emoji);
+      const result = this.googleSheetsService.addCategory(name, typeNames[type], emoji);
 
       if (result.success) {
-        const typeNames: Record<string, string> = {
-          [CategoryType.INCOME]: 'Доход',
-          [CategoryType.EXPENSE]: 'Расход',
-          [CategoryType.TRANSFER]: 'Перевод',
-        };
-
         const message =
           `✅ Категория успешно добавлена!\n\n` +
           `📝 Название: ${name}\n` +
-          `📂 Тип: ${typeNames[type as string] || type}\n` +
+          `📂 Тип: ${typeNames[type]}\n` +
           `😊 Эмодзи: ${emoji}\n`;
 
         this.messageService.sendText(chatId, message);

@@ -1,5 +1,5 @@
 import { CONFIG } from '@config';
-import { UserState, StepsType } from '@state/interfaces';
+import { CategoryAddStepsCallBack, UserState } from '@state';
 
 export class StateManager {
   private static instance: StateManager;
@@ -16,7 +16,11 @@ export class StateManager {
     return StateManager.instance;
   }
 
-  public setUserState(chatId: number, step: StepsType, data?: Record<string, any>): void {
+  public setUserState(
+    chatId: number,
+    step: CategoryAddStepsCallBack,
+    data?: Record<string, any>,
+  ): void {
     try {
       const state: UserState = {
         step: step,
@@ -36,7 +40,7 @@ export class StateManager {
   }
 
   public getUserState(chatId: number): UserState | null {
-    const key = `user_state_ ${chatId}`;
+    const key = `user_state_${chatId}`;
 
     const stateJson = this.cache.get(key);
 
@@ -48,9 +52,9 @@ export class StateManager {
     return null;
   }
 
-  public isUserInSteps(chatId: number, step?: StepsType): boolean {
+  public isUserInSteps(chatId: number, step?: CategoryAddStepsCallBack): boolean {
     const state = this.getUserState(chatId);
-    return Boolean(state && step && step in StepsType);
+    return Boolean(state && state.step === step);
   }
 
   public isUserInCache(chatId: number): boolean {
@@ -77,7 +81,7 @@ export class StateManager {
     }
   }
 
-  public updateUserStep(chatId: number, newStep: StepsType): void {
+  public updateUserStep(chatId: number, newStep: CategoryAddStepsCallBack): void {
     const state = this.getUserState(chatId);
     if (state) {
       // Обновляем только тип состояния, сохраняя все данные
