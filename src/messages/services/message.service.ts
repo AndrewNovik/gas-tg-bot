@@ -40,73 +40,6 @@ export class MessageService implements AbstractClassService<MessageService> {
     }
   }
 
-  public sendMenu(chatId: number): ApiResponse {
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: 'ℹ️ Справка', callback_data: 'help' },
-          { text: '👋 Приветствие', callback_data: 'start' },
-        ],
-        [
-          { text: '📊 Статистика', callback_data: 'stats' },
-          { text: '⚙️ Настройки', callback_data: 'settings' },
-        ],
-      ],
-    };
-
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
-    const payload = {
-      chat_id: chatId,
-      text: '🎛️ Основное меню\n\nВыберите действие:',
-      parse_mode: 'HTML',
-      reply_markup: JSON.stringify(keyboard),
-    };
-    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: 'post',
-      headers: { 'Content-Type': 'application/json' },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true,
-    };
-    try {
-      const response = UrlFetchApp.fetch(url, options);
-      return JSON.parse(response.getContentText());
-    } catch (error) {
-      return { ok: false, description: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  public sendCategoryTypeKeyboard(chatId: number): ApiResponse {
-    const keyboard: Keyboard = {
-      inline_keyboard: [
-        [
-          { text: '💰 Доход', callback_data: CategoryTypeCallBack.INCOME },
-          { text: '💸 Расход', callback_data: CategoryTypeCallBack.EXPENSE },
-        ],
-        [{ text: '🔄 Перевод', callback_data: CategoryTypeCallBack.TRANSFER }],
-        [{ text: '❌ Отмена', callback_data: KeyboardCancelCallBack.CANCEL_STEPS }],
-      ],
-    };
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
-    const payload = {
-      chat_id: chatId,
-      text: '📂 Выберите тип категории:',
-      parse_mode: 'HTML',
-      reply_markup: JSON.stringify(keyboard),
-    };
-    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: 'post',
-      headers: { 'Content-Type': 'application/json' },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true,
-    };
-    try {
-      const response = UrlFetchApp.fetch(url, options);
-      return JSON.parse(response.getContentText());
-    } catch (error) {
-      return { ok: false, description: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
   public answerCallbackQuery(callbackQueryId: string): ApiResponse {
     const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/answerCallbackQuery`;
 
@@ -133,7 +66,7 @@ export class MessageService implements AbstractClassService<MessageService> {
     }
   }
 
-  public sendKeyboard(chatId: number, messageText: string, keyboard: Keyboard): ApiResponse {
+  public sendInlineKeyboard(chatId: number, messageText: string, keyboard: Keyboard): ApiResponse {
     const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
     const payload = {
       chat_id: chatId,
@@ -180,6 +113,32 @@ export class MessageService implements AbstractClassService<MessageService> {
       return JSON.parse(response.getContentText());
     } catch (error) {
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  public sendAdminMessage(message: string): void {
+    try {
+      const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
+      const payload = {
+        chat_id: CONFIG.ADMIN_ID,
+        text: message,
+        parse_mode: 'HTML',
+      };
+
+      const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true,
+      };
+
+      UrlFetchApp.fetch(url, options);
+    } catch (error) {
+      throw new Error(
+        `❌ Ошибка в sendAdminMessage: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 }

@@ -1,5 +1,5 @@
 import { CONFIG } from '@config';
-import { BotCommand } from '@commands';
+import { BotCommand, MAIN_COMMANDS } from '@commands';
 import { MessageService } from '@messages';
 import { AbstractClassService } from '@shared';
 
@@ -21,24 +21,16 @@ export class CommandService implements AbstractClassService<CommandService> {
   public setupBotCommands(): void {
     const commands: BotCommand[] = [
       {
-        command: 'addtransaction',
+        command: MAIN_COMMANDS.START,
+        description: 'Начало работы с ботом',
+      },
+      {
+        command: MAIN_COMMANDS.ADDTRANSACTION,
         description: 'Добавить новую транзакцию в таблицу',
       },
       {
-        command: 'addcategory',
+        command: MAIN_COMMANDS.ADDCATEGORY,
         description: 'Добавить новую категорию транзакций',
-      },
-      {
-        command: 'start',
-        description: 'Приветствие и краткое описание функционала',
-      },
-      {
-        command: 'help',
-        description: 'Список всех команд и инструкции по использованию',
-      },
-      {
-        command: 'menu',
-        description: 'Основное меню с кнопками быстрого доступа',
       },
     ];
 

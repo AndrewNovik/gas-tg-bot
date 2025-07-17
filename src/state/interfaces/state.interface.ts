@@ -1,13 +1,13 @@
-import { COMMANDS_CB } from '@commands/enums/commands.enums';
+import { CALLBACK_COMMANDS } from '@commands/enums/commands.enums';
 import {
   CategoryAddStepsCallBack,
   CategoryTypeCallBack,
   KeyboardCancelCallBack,
+  TransactionAddStepsCallBack,
 } from '@state/enums/state.enums';
 export interface UserState {
-  step: CategoryAddStepsCallBack;
+  step?: CategoryAddStepsCallBack | TransactionAddStepsCallBack | null;
   data: Record<string, any>;
-  timestamp: number;
 }
 
 export interface Keyboard {
@@ -17,6 +17,6 @@ export interface Keyboard {
       | KeyboardCancelCallBack
       | CategoryTypeCallBack
       | CategoryAddStepsCallBack
-      | COMMANDS_CB;
+      | CALLBACK_COMMANDS;
   }[][];
 }

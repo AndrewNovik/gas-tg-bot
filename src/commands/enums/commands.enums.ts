@@ -1,22 +1,33 @@
 import { COMMANDS_CALLBACK } from '@commands/consts/commands.consts';
 
-export enum CategoryType {
+export enum TRANSACTION_TYPE {
   INCOME = 'income',
   EXPENSE = 'expense',
   TRANSFER = 'transfer',
 }
 
-export enum COMMANDS {
-  START = '/start',
-  HELP = '/help',
-  MENU = '/menu',
-  ADDTRANSACTION = '/addtransaction',
-  ADDCATEGORY = '/addcategory',
+// Команды со слешем
+export enum MAIN_COMMANDS {
+  START = '/start', // готово
+  ADDTRANSACTION = '/addtransaction', // готово
+  ADDCATEGORY = '/addcategory', // готово
+  // Добавление транзакции to do позже
+  ADDINCOME = '/addincome',
+  ADDEXPENSE = '/addexpense',
+  ADDTRANSFER = '/addtransfer',
 }
 
-export enum COMMANDS_CB {
-  HELP = `${COMMANDS_CALLBACK}_help`,
-  MENU = `${COMMANDS_CALLBACK}_menu`,
+// Команды без слеша
+export enum TEXT_COMMANDS {
+  INCOME = 'Доход',
+  EXPENSE = 'Расход',
+  TRANSFER = 'Перевод',
+  ADDCATEGORY = 'Добавить категорию', // готово
+  // Настройки to do позже
+  SETTINGS = 'Настройки',
+}
+
+export enum CALLBACK_COMMANDS {
   STATS = `${COMMANDS_CALLBACK}_stats`,
 
   INCOME = `${COMMANDS_CALLBACK}_income`,

@@ -1,17 +1,24 @@
-import { ADD_CATEGORY, CATEGOTY_TYPE, CANCEL } from '@state/consts/state.consts';
+import { ADD_CATEGORY, CATEGOTY_TYPE, CANCEL, ADD_TRANSACTION } from '@state/consts/state.consts';
 
 export enum KeyboardCancelCallBack {
   CANCEL_STEPS = `${CANCEL}_steps`,
 }
 
-export enum CategoryTypeCallBack {
+export enum CREATE_CATEGORY_TYPE_CALLBACK {
   INCOME = `${CATEGOTY_TYPE}_income`,
   EXPENSE = `${CATEGOTY_TYPE}_expense`,
   TRANSFER = `${CATEGOTY_TYPE}_transfer`,
 }
 
-export enum CategoryAddStepsCallBack {
+export enum CREATE_CATEGORY_STEPS_CALLBACK {
   ADD_CATEGORY_NAME = `${ADD_CATEGORY}_name`,
   ADD_CATEGORY_TYPE = `${ADD_CATEGORY}_type`,
   ADD_CATEGORY_EMOJI = `${ADD_CATEGORY}_emoji`,
+}
+
+export enum CREATE_TRANSACTION_STEPS_CALLBACK {
+  ADD_TRANSACTION_TYPE = `${ADD_TRANSACTION}_type`,
+  ADD_TRANSACTION_CATEGORY_TYPE = `${ADD_TRANSACTION}_category_type`,
+  ADD_TRANSACTION_AMOUNT = `${ADD_TRANSACTION}_amount`,
+  ADD_TRANSACTION_CONFIRM = `${ADD_TRANSACTION}_confirm`,
 }

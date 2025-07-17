@@ -1,1 +1,1 @@
-export { CategoryType } from '@commands/enums/commands.enums';
+export * from '@commands/enums/commands.enums';

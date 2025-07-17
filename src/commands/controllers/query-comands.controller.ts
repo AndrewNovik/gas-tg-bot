@@ -1,8 +1,8 @@
 import { CONFIG } from '@config';
 import {
   StateManager,
-  CategoryAddStepsCallBack,
-  CategoryTypeCallBack,
+  CREATE_CATEGORY_STEPS_CALLBACK,
+  CREATE_CATEGORY_TYPE_CALLBACK,
   KeyboardCancelCallBack,
 } from '@state';
 import { MessageService } from '@messages';
@@ -10,7 +10,7 @@ import { GoogleSheetsService } from '@google-sheets';
 import { CallbackQuery, TelegramReplyKeyboard } from '@telegram-api';
 import { AbstractClassService } from '@shared';
 import { USERS_ID } from '@commands/consts';
-import { CategoryType, COMMANDS_CB } from '@commands/enums/commands.enums';
+import { TRANSACTION_TYPE, CALLBACK_COMMANDS } from '@commands/enums/commands.enums';
 import { TransactionCategory } from '@google-sheets/interfaces';
 
 export class QueryCommandsController implements AbstractClassService<QueryCommandsController> {
@@ -55,22 +55,6 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
     this.messageService.sendText(chatId, JSON.stringify(state));
 
     switch (data) {
-      // Базовые команды
-      case COMMANDS_CB.HELP:
-        this.messageService.sendText(
-          chatId,
-          'Доступные команды:\n/start - приветствие\n/help - справка\n/menu - основное меню\n/add - добавить транзакцию\n/addcategory - добавить категорию',
-        );
-        break;
-
-      case COMMANDS_CB.STATS:
-        this.messageService.sendText(chatId, '📊 Статистика пока недоступна');
-        break;
-
-      case COMMANDS_CB.SETTINGS:
-        this.messageService.sendText(chatId, '⚙️ Настройки пока недоступны');
-        break;
-
       // Обработка создания типов категорий
       case CategoryTypeCallBack.INCOME:
         if (this.stateManager.isUserInSteps(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_TYPE)) {
@@ -96,15 +80,15 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
 
       // Обработка типов транзакций
       case COMMANDS_CB.INCOME:
-        this.handleAddTransaction(chatId, firstName, CategoryType.INCOME);
+        this.handleAddTransaction(chatId, CategoryType.INCOME);
         break;
 
       case COMMANDS_CB.EXPENSE:
-        this.handleAddTransaction(chatId, firstName, CategoryType.EXPENSE);
+        this.handleAddTransaction(chatId, CategoryType.EXPENSE);
         break;
 
       case COMMANDS_CB.TRANSFER:
-        this.handleAddTransaction(chatId, firstName, CategoryType.TRANSFER);
+        this.handleAddTransaction(chatId, CategoryType.TRANSFER);
         break;
 
       default:
@@ -173,7 +157,7 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
     }
   }
 
-  private handleAddTransaction(chatId: number, firstName: string, type: CategoryType): void {
+  private handleAddTransaction(chatId: number, type: CategoryType): void {
     try {
       // Получаем категории по типу
       const categories: TransactionCategory[] = this.googleSheetsService.getCategoriesByType(type);

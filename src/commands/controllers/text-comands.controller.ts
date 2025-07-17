@@ -11,8 +11,8 @@ import { MessageService } from '@messages';
 import { GoogleSheetsService } from '@google-sheets';
 import { Message, TelegramReplyKeyboard } from '@telegram-api';
 import { AbstractClassService } from '@shared';
-import { CategoryType, USERS_ID } from '@commands';
-import { COMMANDS, COMMANDS_CB } from '@commands/enums/commands.enums';
+import { addTransactionKeyboard, startMenuKeyboard, USERS_ID } from '@commands';
+import { MAIN_COMMANDS, TEXT_COMMANDS, TRANSACTION_TYPE } from '@commands/enums/';
 import { TransactionCategory } from '@google-sheets/interfaces';
 
 export class TextCommandsController implements AbstractClassService<TextCommandsController> {
@@ -49,55 +49,30 @@ export class TextCommandsController implements AbstractClassService<TextCommands
       return;
     }
 
+    const currentState = this.stateManager.getUserState(chatId);
+
     switch (text) {
-      case COMMANDS.START:
-        const menuKeyboard: TelegramReplyKeyboard = {
-          keyboard: [['💰 Доход', '💸 Новый расход'], ['⚙️ Настройки']],
-          resize_keyboard: true, // автоматически подгоняет размер кнопок
-          one_time_keyboard: false, // не скрывать после нажатия
-        };
+      case MAIN_COMMANDS.START:
         this.messageService.sendReplyMarkup(
           chatId,
-          `Привет, ${firstName}! Я простой бот на GAS.`,
-          menuKeyboard,
+          `Привет, ${firstName}! Выбери действие:`,
+          startMenuKeyboard,
         );
         break;
 
-      case COMMANDS.HELP:
-        this.messageService.sendText(
-          chatId,
-          'Доступные команды:\n/start - приветствие\n/help - справка\n/menu - основное меню\n/add - добавить транзакцию\n/addcategory - добавить категорию',
-        );
-        break;
-
-      case COMMANDS.MENU:
-        this.messageService.sendMenu(chatId);
-        break;
-
-      case COMMANDS.ADDTRANSACTION:
-        const transactionTypeKeyboard: Keyboard = {
-          inline_keyboard: [
-            [
-              { text: '💰 Доход', callback_data: COMMANDS_CB.INCOME },
-              { text: '💸 Расход', callback_data: COMMANDS_CB.EXPENSE },
-              { text: '🔄 Перевод', callback_data: COMMANDS_CB.TRANSFER },
-            ],
-          ],
-        };
-        this.messageService.sendKeyboard(
+      case MAIN_COMMANDS.ADDTRANSACTION:
+        this.messageService.sendReplyMarkup(
           chatId,
           'Выберите тип транзакции:',
-          transactionTypeKeyboard,
+          addTransactionKeyboard,
         );
         break;
 
-      case COMMANDS.ADDCATEGORY:
-        this.handleAddCategoryStart(chatId, firstName);
+      case MAIN_COMMANDS.ADDCATEGORY || TEXT_COMMANDS.ADDCATEGORY:
+        this.handleAddCategoryStart(chatId);
         break;
 
       default:
-        // Проверяем, находится ли пользователь в процессе добавления категории
-        const currentState = this.stateManager.getUserState(chatId);
         this.messageService.sendText(chatId, JSON.stringify(currentState));
         if (currentState) {
           if (currentState.step === CategoryAddStepsCallBack.ADD_CATEGORY_NAME) {
@@ -120,10 +95,10 @@ export class TextCommandsController implements AbstractClassService<TextCommands
           // Обработка текстовых команд от Reply Keyboard
           switch (text) {
             case '💰 Доход':
-              this.handleAddTransaction(chatId, firstName, CategoryType.INCOME);
+              this.handleAddTransaction(chatId, firstName, TRANSACTION_TYPE.INCOME);
               break;
             case '💸 Новый расход':
-              this.handleAddTransaction(chatId, firstName, CategoryType.EXPENSE);
+              this.handleAddTransaction(chatId, firstName, TRANSACTION_TYPE.EXPENSE);
               break;
             case '⚙️ Настройки':
               this.messageService.sendText(chatId, '⚙️ Настройки пока недоступны');
@@ -136,8 +111,8 @@ export class TextCommandsController implements AbstractClassService<TextCommands
     }
   }
 
-  private handleAddCategoryStart(chatId: number, firstName: string): void {
-    if (this.stateManager.isUserInCache(chatId)) {
+  private handleAddCategoryStart(chatId: number): void {
+    if (!!this.stateManager.getUserState(chatId)) {
       this.stateManager.clearUserState(chatId);
     }
 
@@ -185,7 +160,7 @@ export class TextCommandsController implements AbstractClassService<TextCommands
         ],
       };
 
-      this.messageService.sendKeyboard(chatId, message, keyboard);
+      this.messageService.sendInlineKeyboard(chatId, message, keyboard);
     } catch (error) {
       this.messageService.sendText(
         Number(CONFIG.ADMIN_ID),
@@ -208,9 +183,9 @@ export class TextCommandsController implements AbstractClassService<TextCommands
       const { name, type } = state.data;
 
       const typeNames: Record<string, string> = {
-        [CategoryTypeCallBack.INCOME]: CategoryType.INCOME,
-        [CategoryTypeCallBack.EXPENSE]: CategoryType.EXPENSE,
-        [CategoryTypeCallBack.TRANSFER]: CategoryType.TRANSFER,
+        [CategoryTypeCallBack.INCOME]: TRANSACTION_TYPE.INCOME,
+        [CategoryTypeCallBack.EXPENSE]: TRANSACTION_TYPE.EXPENSE,
+        [CategoryTypeCallBack.TRANSFER]: TRANSACTION_TYPE.TRANSFER,
       };
 
       // Добавляем категорию в Google Sheets
@@ -242,7 +217,7 @@ export class TextCommandsController implements AbstractClassService<TextCommands
     }
   }
 
-  private handleAddTransaction(chatId: number, firstName: string, type: CategoryType): void {
+  private handleAddTransaction(chatId: number, firstName: string, type: TRANSACTION_TYPE): void {
     try {
       // Получаем категории по типу
       const categories: TransactionCategory[] = this.googleSheetsService.getCategoriesByType(type);
