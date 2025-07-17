@@ -6,18 +6,23 @@ import {
   KeyboardCancelCallBack,
 } from '@state';
 import { MessageService } from '@messages';
-import { CallbackQuery } from '@telegram-api';
+import { GoogleSheetsService } from '@google-sheets';
+import { CallbackQuery, TelegramReplyKeyboard } from '@telegram-api';
 import { AbstractClassService } from '@shared';
 import { USERS_ID } from '@commands/consts';
+import { CategoryType, COMMANDS_CB } from '@commands/enums/commands.enums';
+import { TransactionCategory } from '@google-sheets/interfaces';
 
 export class QueryCommandsController implements AbstractClassService<QueryCommandsController> {
   private static instance: QueryCommandsController;
   private stateManager: StateManager;
   private messageService: MessageService;
+  public readonly googleSheetsService: GoogleSheetsService;
 
   private constructor() {
     this.stateManager = StateManager.getInstance();
     this.messageService = MessageService.getInstance();
+    this.googleSheetsService = GoogleSheetsService.getInstance();
   }
 
   public static getInstance(): QueryCommandsController {
@@ -50,26 +55,23 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
     this.messageService.sendText(chatId, JSON.stringify(state));
 
     switch (data) {
-      case 'start':
-        this.messageService.sendText(chatId, `Привет, ${firstName}! Я простой бот на GAS.`);
-        break;
-
-      case 'help':
+      // Базовые команды
+      case COMMANDS_CB.HELP:
         this.messageService.sendText(
           chatId,
           'Доступные команды:\n/start - приветствие\n/help - справка\n/menu - основное меню\n/add - добавить транзакцию\n/addcategory - добавить категорию',
         );
         break;
 
-      case 'stats':
+      case COMMANDS_CB.STATS:
         this.messageService.sendText(chatId, '📊 Статистика пока недоступна');
         break;
 
-      case 'settings':
+      case COMMANDS_CB.SETTINGS:
         this.messageService.sendText(chatId, '⚙️ Настройки пока недоступны');
         break;
 
-      // Обработка типов категорий
+      // Обработка создания типов категорий
       case CategoryTypeCallBack.INCOME:
         if (this.stateManager.isUserInSteps(chatId, CategoryAddStepsCallBack.ADD_CATEGORY_TYPE)) {
           this.handleCategoryTypeSelection(chatId, CategoryTypeCallBack.INCOME);
@@ -90,6 +92,19 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
 
       case KeyboardCancelCallBack.CANCEL_STEPS:
         this.handleCancelAddCategory(chatId);
+        break;
+
+      // Обработка типов транзакций
+      case COMMANDS_CB.INCOME:
+        this.handleAddTransaction(chatId, firstName, CategoryType.INCOME);
+        break;
+
+      case COMMANDS_CB.EXPENSE:
+        this.handleAddTransaction(chatId, firstName, CategoryType.EXPENSE);
+        break;
+
+      case COMMANDS_CB.TRANSFER:
+        this.handleAddTransaction(chatId, firstName, CategoryType.TRANSFER);
         break;
 
       default:
@@ -156,5 +171,52 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
 
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
     }
+  }
+
+  private handleAddTransaction(chatId: number, firstName: string, type: CategoryType): void {
+    try {
+      // Получаем категории по типу
+      const categories: TransactionCategory[] = this.googleSheetsService.getCategoriesByType(type);
+
+      if (categories.length === 0) {
+        this.messageService.sendText(
+          chatId,
+          `❌ Категории для типа "${type}" не найдены. Сначала добавьте категории через /addcategory`,
+        );
+        return;
+      }
+
+      // Создаем клавиатуру с категориями
+      const keyboard: TelegramReplyKeyboard = {
+        keyboard: this.createCategoryKeyboard(categories),
+        resize_keyboard: true,
+        one_time_keyboard: false,
+      };
+
+      this.messageService.sendReplyMarkup(chatId, `Выбери категорию`, keyboard);
+    } catch (error) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Ошибка при получении категорий: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  private createCategoryKeyboard(categories: TransactionCategory[]): string[][] {
+    const keyboard: string[][] = [];
+    const itemsPerRow = 2; // 2 кнопки в ряду
+
+    for (let i = 0; i < categories.length; i += itemsPerRow) {
+      const row: string[] = [];
+
+      for (let j = 0; j < itemsPerRow && i + j < categories.length; j++) {
+        const category = categories[i + j];
+        row.push(`${category.emoji} ${category.name}`);
+      }
+
+      keyboard.push(row);
+    }
+
+    return keyboard;
   }
 }

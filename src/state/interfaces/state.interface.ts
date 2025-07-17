@@ -1,3 +1,4 @@
+import { COMMANDS_CB } from '@commands/enums/commands.enums';
 import {
   CategoryAddStepsCallBack,
   CategoryTypeCallBack,
@@ -12,6 +13,10 @@ export interface UserState {
 export interface Keyboard {
   inline_keyboard: {
     text: string;
-    callback_data: KeyboardCancelCallBack | CategoryTypeCallBack | CategoryAddStepsCallBack;
+    callback_data:
+      | KeyboardCancelCallBack
+      | CategoryTypeCallBack
+      | CategoryAddStepsCallBack
+      | COMMANDS_CB;
   }[][];
 }

@@ -2,6 +2,7 @@ import { CONFIG } from '@config';
 import { ApiResponse } from '@messages';
 import { AbstractClassService } from '@shared';
 import { CategoryTypeCallBack, KeyboardCancelCallBack, Keyboard } from '@state';
+import { TelegramReplyKeyboard } from '@telegram-api/index';
 
 export class MessageService implements AbstractClassService<MessageService> {
   private static instance: MessageService;
@@ -146,6 +147,34 @@ export class MessageService implements AbstractClassService<MessageService> {
       payload: JSON.stringify(payload),
       muteHttpExceptions: true,
     };
+    try {
+      const response = UrlFetchApp.fetch(url, options);
+      return JSON.parse(response.getContentText());
+    } catch (error) {
+      return { ok: false, description: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
+  public sendReplyMarkup(
+    chatId: number,
+    messageText: string,
+    keyboard: TelegramReplyKeyboard,
+  ): ApiResponse {
+    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
+    const payload = {
+      chat_id: chatId,
+      text: messageText,
+      parse_mode: 'HTML',
+      reply_markup: keyboard,
+    };
+
+    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+      method: 'post',
+      headers: { 'Content-Type': 'application/json' },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true,
+    };
+
     try {
       const response = UrlFetchApp.fetch(url, options);
       return JSON.parse(response.getContentText());

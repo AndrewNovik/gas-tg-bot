@@ -11,3 +11,10 @@ export interface CategoryResult {
   row?: number;
   error?: string;
 }
+
+export interface TransactionCategory {
+  id: number;
+  name: string;
+  type: string;
+  emoji: string;
+}

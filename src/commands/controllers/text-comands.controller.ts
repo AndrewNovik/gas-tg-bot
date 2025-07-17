@@ -1,22 +1,25 @@
 import { CONFIG } from '@config';
 import {
-  Keyboard,
   StateManager,
   CategoryAddStepsCallBack,
   CategoryTypeCallBack,
   KeyboardCancelCallBack,
   UserState,
+  Keyboard,
 } from '@state';
 import { MessageService } from '@messages';
 import { GoogleSheetsService } from '@google-sheets';
-import { Message } from '@telegram-api';
+import { Message, TelegramReplyKeyboard } from '@telegram-api';
 import { AbstractClassService } from '@shared';
 import { CategoryType, USERS_ID } from '@commands';
+import { COMMANDS, COMMANDS_CB } from '@commands/enums/commands.enums';
+import { TransactionCategory } from '@google-sheets/interfaces';
+
 export class TextCommandsController implements AbstractClassService<TextCommandsController> {
   private static instance: TextCommandsController;
   private readonly stateManager: StateManager;
   private readonly messageService: MessageService;
-  private readonly googleSheetsService: GoogleSheetsService;
+  public readonly googleSheetsService: GoogleSheetsService;
 
   private constructor() {
     this.stateManager = StateManager.getInstance();
@@ -47,26 +50,48 @@ export class TextCommandsController implements AbstractClassService<TextCommands
     }
 
     switch (text) {
-      case '/start':
-        this.messageService.sendText(chatId, `Привет, ${firstName}! Я простой бот на GAS.`);
+      case COMMANDS.START:
+        const menuKeyboard: TelegramReplyKeyboard = {
+          keyboard: [['💰 Доход', '💸 Новый расход'], ['⚙️ Настройки']],
+          resize_keyboard: true, // автоматически подгоняет размер кнопок
+          one_time_keyboard: false, // не скрывать после нажатия
+        };
+        this.messageService.sendReplyMarkup(
+          chatId,
+          `Привет, ${firstName}! Я простой бот на GAS.`,
+          menuKeyboard,
+        );
         break;
 
-      case '/help':
+      case COMMANDS.HELP:
         this.messageService.sendText(
           chatId,
           'Доступные команды:\n/start - приветствие\n/help - справка\n/menu - основное меню\n/add - добавить транзакцию\n/addcategory - добавить категорию',
         );
         break;
 
-      case '/menu':
+      case COMMANDS.MENU:
         this.messageService.sendMenu(chatId);
         break;
 
-      case '/addtransaction':
-        this.handleAddTransaction(chatId, firstName);
+      case COMMANDS.ADDTRANSACTION:
+        const transactionTypeKeyboard: Keyboard = {
+          inline_keyboard: [
+            [
+              { text: '💰 Доход', callback_data: COMMANDS_CB.INCOME },
+              { text: '💸 Расход', callback_data: COMMANDS_CB.EXPENSE },
+              { text: '🔄 Перевод', callback_data: COMMANDS_CB.TRANSFER },
+            ],
+          ],
+        };
+        this.messageService.sendKeyboard(
+          chatId,
+          'Выберите тип транзакции:',
+          transactionTypeKeyboard,
+        );
         break;
 
-      case '/addcategory':
+      case COMMANDS.ADDCATEGORY:
         this.handleAddCategoryStart(chatId, firstName);
         break;
 
@@ -92,45 +117,22 @@ export class TextCommandsController implements AbstractClassService<TextCommands
         ) {
           this.handleCategoryEmojiInput(chatId, text);
         } else {
-          // Эхо-ответ
-          this.messageService.sendText(chatId, `Эхо: "${text}"`);
+          // Обработка текстовых команд от Reply Keyboard
+          switch (text) {
+            case '💰 Доход':
+              this.handleAddTransaction(chatId, firstName, CategoryType.INCOME);
+              break;
+            case '💸 Новый расход':
+              this.handleAddTransaction(chatId, firstName, CategoryType.EXPENSE);
+              break;
+            case '⚙️ Настройки':
+              this.messageService.sendText(chatId, '⚙️ Настройки пока недоступны');
+              break;
+            default:
+              // Эхо-ответ
+              this.messageService.sendText(chatId, `Эхо: "${text}"`);
+          }
         }
-    }
-  }
-
-  private handleAddTransaction(chatId: number, firstName: string): void {
-    const description = 'Test transaction';
-    const category = 'Test category';
-    const amount = Math.floor(Math.random() * 5000) + 100; // от 100 до 5100
-
-    try {
-      // Добавляем транзакцию в Google Sheets
-      const result = this.googleSheetsService.addTransaction(description, amount, category);
-
-      if (result.success && result.data) {
-        const date = `${result.data?.[0] ?? ''}`;
-        const time = `${result.data?.[1] ?? ''}`;
-        const message =
-          `✅ Транзакция успешно добавлена!\n\n` +
-          `📝 Описание: ${description}\n` +
-          `💰 Сумма: ${amount} руб.\n` +
-          `📂 Категория: ${category}\n` +
-          `📅 Дата: ${date}\n` +
-          `🕐 Время: ${time}\n` +
-          `📊 Строка: ${result.row || 'Не указана'}`;
-
-        this.messageService.sendText(chatId, message);
-      } else {
-        this.messageService.sendText(
-          chatId,
-          `❌ Ошибка при добавлении транзакции: ${result.error || 'Неизвестная ошибка'}`,
-        );
-      }
-    } catch (error) {
-      this.messageService.sendText(
-        chatId,
-        `❌ Ошибка в handleAddTransaction: ${error instanceof Error ? error.message : String(error)}`,
-      );
     }
   }
 
@@ -238,5 +240,52 @@ export class TextCommandsController implements AbstractClassService<TextCommands
       );
       this.stateManager.clearUserState(chatId);
     }
+  }
+
+  private handleAddTransaction(chatId: number, firstName: string, type: CategoryType): void {
+    try {
+      // Получаем категории по типу
+      const categories: TransactionCategory[] = this.googleSheetsService.getCategoriesByType(type);
+
+      if (categories.length === 0) {
+        this.messageService.sendText(
+          chatId,
+          `❌ Категории для типа "${type}" не найдены. Сначала добавьте категории через /addcategory`,
+        );
+        return;
+      }
+
+      // Создаем клавиатуру с категориями
+      const keyboard: TelegramReplyKeyboard = {
+        keyboard: this.createCategoryKeyboard(categories),
+        resize_keyboard: true,
+        one_time_keyboard: false,
+      };
+
+      this.messageService.sendReplyMarkup(chatId, `Выбери категорию`, keyboard);
+    } catch (error) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Ошибка при получении категорий: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  private createCategoryKeyboard(categories: TransactionCategory[]): string[][] {
+    const keyboard: string[][] = [];
+    const itemsPerRow = 2; // 2 кнопки в ряду
+
+    for (let i = 0; i < categories.length; i += itemsPerRow) {
+      const row: string[] = [];
+
+      for (let j = 0; j < itemsPerRow && i + j < categories.length; j++) {
+        const category = categories[i + j];
+        row.push(`${category.emoji} ${category.name}`);
+      }
+
+      keyboard.push(row);
+    }
+
+    return keyboard;
   }
 }

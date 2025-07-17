@@ -1,6 +1,6 @@
 import { CONFIG } from '@config';
 import { MessageService } from '@messages';
-import { TransactionResult, CategoryResult } from '@google-sheets/interfaces';
+import { TransactionResult, CategoryResult, TransactionCategory } from '@google-sheets/interfaces';
 import { AbstractClassService } from '@shared';
 
 export class GoogleSheetsService implements AbstractClassService<GoogleSheetsService> {
@@ -138,7 +138,44 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     }
   }
 
-  private connectToGoogleSheet(sheetName: string): GoogleAppsScript.Spreadsheet.Sheet | null {
+  public getCategoriesByType(type: string): TransactionCategory[] {
+    try {
+      const sheet = this.connectToGoogleSheet('TransactionCategories');
+
+      if (!sheet) {
+        return [];
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return []; // Если таблица пустая или только заголовки
+      }
+
+      // Получаем все данные начиная со 2-й строки (id, name, type, emoji)
+      const data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+
+      // Фильтруем категории по типу
+      const filteredCategories: TransactionCategory[] = data
+        .filter((row) => row[2] === type) // type находится в 3-й колонке (индекс 2)
+        .map((row) => ({
+          id: row[0] as number,
+          name: row[1] as string,
+          type: row[2] as string,
+          emoji: row[3] as string,
+        }));
+
+      return filteredCategories;
+    } catch (error) {
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка при получении категорий по типу ${type}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return [];
+    }
+  }
+
+  public connectToGoogleSheet(sheetName: string): GoogleAppsScript.Spreadsheet.Sheet | null {
     const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     const sheet = spreadsheet.getSheetByName(sheetName);
 

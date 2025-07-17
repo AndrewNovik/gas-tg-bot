@@ -267,3 +267,10 @@ export interface Update {
   chosen_inline_result?: ChosenInlineResult;
   callback_query?: CallbackQuery;
 }
+
+export interface TelegramReplyKeyboard {
+  keyboard: string[][];
+  resize_keyboard?: boolean;
+  one_time_keyboard?: boolean;
+  selective?: boolean;
+}
