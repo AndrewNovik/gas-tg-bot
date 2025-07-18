@@ -1,1 +1,1 @@
-export { UserState, Keyboard } from '@state/interfaces/state.interface';
+export * from '@state/interfaces/state.interface';

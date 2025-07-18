@@ -1,1 +1,1 @@
-export { Category, BotCommand } from '@commands/interfaces/commands.interface';
+export * from '@commands/interfaces/commands.interface';

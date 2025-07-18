@@ -1,6 +1,6 @@
+import { startMenuReplyKeyboard } from '@commands/consts';
 import { MessageService } from '@messages/services/message.service';
-import { CategoryAddStepsCallBack, USER_STATE_KEY, UserState } from '@state';
-import { TransactionAddStepsCallBack } from './enums/state.enums';
+import { USER_STATE_KEY, UserStateInterface, STATE_STEPS, CACHE_TIMEOUT } from '@state';
 
 export class StateManager {
   private static instance: StateManager;
@@ -19,51 +19,42 @@ export class StateManager {
     return StateManager.instance;
   }
 
+  public resetUser(chatId: number): void {
+    this.clearUserState(chatId);
+    this.messageService.restartUser(chatId);
+    this.setUserState(chatId, STATE_STEPS.DEFAULT);
+  }
+
+  // Установить конкретный стейт юзера, если передать только чат айди, будет задан дефолтный стейт
   public setUserState(
     chatId: number,
-    step: CategoryAddStepsCallBack | TransactionAddStepsCallBack | null = null,
-    data?: Record<string, any>,
+    step: STATE_STEPS = STATE_STEPS.DEFAULT,
+    data: Record<string, any> = {},
   ): void {
-    try {
-      const state: UserState = {
-        step: step,
-        data: data || {},
-      };
+    const state: UserStateInterface = { step, data };
 
-      const key = `${USER_STATE_KEY}${chatId}`;
-      const stateJson = JSON.stringify(state);
-
-      this.cache.put(key, stateJson, 300);
-    } catch (error) {
-      this.messageService.sendAdminMessage(
-        `❌ Ошибка в setUserState для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
+    this.cache.put(`${USER_STATE_KEY}${chatId}`, JSON.stringify(state), CACHE_TIMEOUT);
   }
 
-  public getUserState(chatId: number): UserState | null {
-    const key = `${USER_STATE_KEY}${chatId}`;
-
-    const stateJson = this.cache.get(key);
-
-    if (stateJson) {
-      return JSON.parse(stateJson);
-    } else {
-      this.messageService.sendAdminMessage(`❌ Состояние для ${chatId} не найдено в кэше`);
-      return null;
-    }
+  // Получить конкретный стейт юзера
+  public getUserState(chatId: number): UserStateInterface | null {
+    return this.cache.get(`${USER_STATE_KEY}${chatId}`)
+      ? JSON.parse(this.cache.get(`${USER_STATE_KEY}${chatId}`) as string)
+      : null;
   }
 
-  public isUserInSteps(chatId: number, step?: CategoryAddStepsCallBack): boolean {
+  // Проверка на то состоит ли юзер в конкретном степе
+  public isUserInStep(chatId: number, step: STATE_STEPS): boolean {
     const state = this.getUserState(chatId);
     return Boolean(state && state.step === step);
   }
 
+  // Принудительная очистка стейта юзера из кеша
   public clearUserState(chatId: number): void {
-    const key = `${USER_STATE_KEY}${chatId}`;
-    this.cache.remove(key);
+    this.cache.remove(`${USER_STATE_KEY}${chatId}`);
   }
 
+  // Обновить только данные, без степа, если юзер не состоит в степе, то будет задан дефолтный стейт и data
   public updateUserStateData(chatId: number, newData: Record<string, any>): void {
     const state = this.getUserState(chatId);
     if (state) {
@@ -71,26 +62,23 @@ export class StateManager {
       state.data = { ...state.data, ...newData };
 
       const key = `${USER_STATE_KEY}${chatId}`;
-      this.cache.put(key, JSON.stringify(state), 300);
+      this.cache.put(key, JSON.stringify(state), CACHE_TIMEOUT);
     } else {
-      this.messageService.sendAdminMessage(
-        `❌ Не удалось обновить состояние для ${chatId}: состояние не найдено`,
-      );
+      this.resetUser(chatId);
     }
   }
 
-  public updateUserStep(chatId: number, newStep: CategoryAddStepsCallBack): void {
+  // Обновить только степ, без данных, если юзер не состоит в кеше
+  public updateUserStateStep(chatId: number, newStep: STATE_STEPS): void {
     const state = this.getUserState(chatId);
     if (state) {
       // Обновляем только тип состояния, сохраняя все данные
       state.step = newStep;
 
       const key = `${USER_STATE_KEY}${chatId}`;
-      this.cache.put(key, JSON.stringify(state), 300);
+      this.cache.put(key, JSON.stringify(state), CACHE_TIMEOUT);
     } else {
-      this.messageService.sendAdminMessage(
-        `❌ Не удалось обновить тип состояния для ${chatId}: состояние не найдено`,
-      );
+      this.resetUser(chatId);
     }
   }
 }

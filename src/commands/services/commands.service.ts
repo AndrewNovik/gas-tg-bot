@@ -1,7 +1,8 @@
 import { CONFIG } from '@config';
-import { BotCommand, MAIN_COMMANDS } from '@commands';
+import { BotCommand, CALLBACK_COMMANDS, setupBotCommands } from '@commands';
 import { MessageService } from '@messages';
 import { AbstractClassService } from '@shared';
+import { TransactionCategory } from '@google-sheets/interfaces';
 
 export class CommandService implements AbstractClassService<CommandService> {
   private static instance: CommandService;
@@ -19,23 +20,8 @@ export class CommandService implements AbstractClassService<CommandService> {
   }
 
   public setupBotCommands(): void {
-    const commands: BotCommand[] = [
-      {
-        command: MAIN_COMMANDS.START,
-        description: 'Начало работы с ботом',
-      },
-      {
-        command: MAIN_COMMANDS.ADDTRANSACTION,
-        description: 'Добавить новую транзакцию в таблицу',
-      },
-      {
-        command: MAIN_COMMANDS.ADDCATEGORY,
-        description: 'Добавить новую категорию транзакций',
-      },
-    ];
-
     // Валидация команд
-    const validationErrors = this.validateCommands(commands);
+    const validationErrors = this.validateCommands(setupBotCommands);
     if (validationErrors.length > 0) {
       this.messageService.sendText(
         Number(CONFIG.ADMIN_ID),
@@ -51,7 +37,7 @@ export class CommandService implements AbstractClassService<CommandService> {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
       payload: JSON.stringify({
-        commands: commands,
+        commands: setupBotCommands,
       }),
       muteHttpExceptions: true,
     };
@@ -124,5 +110,28 @@ export class CommandService implements AbstractClassService<CommandService> {
     });
 
     return errors;
+  }
+
+  public createCategoryInlineKeyboard(
+    categories: TransactionCategory[],
+  ): Array<Array<{ text: string; callback_data: string }>> {
+    const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
+    const itemsPerRow = 2; // 2 кнопки в ряду
+
+    for (let i = 0; i < categories.length; i += itemsPerRow) {
+      const row: Array<{ text: string; callback_data: string }> = [];
+
+      for (let j = 0; j < itemsPerRow && i + j < categories.length; j++) {
+        const category = categories[i + j];
+        row.push({
+          text: `${category.emoji} ${category.name}`,
+          callback_data: `${CALLBACK_COMMANDS.CHOOSE_TRANSACTION_CATEGORY}${category.id}`,
+        });
+      }
+
+      keyboard.push(row);
+    }
+
+    return keyboard;
   }
 }

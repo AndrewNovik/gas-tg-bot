@@ -1,8 +1,9 @@
+import { startMenuReplyKeyboard } from '@commands';
 import { CONFIG } from '@config';
 import { ApiResponse } from '@messages';
 import { AbstractClassService } from '@shared';
-import { CategoryTypeCallBack, KeyboardCancelCallBack, Keyboard } from '@state';
-import { TelegramReplyKeyboard } from '@telegram-api/index';
+import { CACHE_TIMEOUT } from '@state';
+import { TelegramInlineKeyboardInterface, TelegramReplyKeyboardInterface } from '@telegram-api';
 
 export class MessageService implements AbstractClassService<MessageService> {
   private static instance: MessageService;
@@ -66,7 +67,11 @@ export class MessageService implements AbstractClassService<MessageService> {
     }
   }
 
-  public sendInlineKeyboard(chatId: number, messageText: string, keyboard: Keyboard): ApiResponse {
+  public sendInlineKeyboard(
+    chatId: number,
+    messageText: string,
+    keyboard: TelegramInlineKeyboardInterface,
+  ): ApiResponse {
     const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
     const payload = {
       chat_id: chatId,
@@ -91,7 +96,7 @@ export class MessageService implements AbstractClassService<MessageService> {
   public sendReplyMarkup(
     chatId: number,
     messageText: string,
-    keyboard: TelegramReplyKeyboard,
+    keyboard: TelegramReplyKeyboardInterface,
   ): ApiResponse {
     const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
     const payload = {
@@ -140,5 +145,13 @@ export class MessageService implements AbstractClassService<MessageService> {
         `❌ Ошибка в sendAdminMessage: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
+  }
+
+  public restartUser(chatId: number): void {
+    this.sendReplyMarkup(
+      chatId,
+      `❌ Вы не совершали никаких действий в течении ${CACHE_TIMEOUT} секунд, поэтому прогресс был сброшен. Начните сначала.`,
+      startMenuReplyKeyboard,
+    );
   }
 }

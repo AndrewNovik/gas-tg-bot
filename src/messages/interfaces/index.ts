@@ -1,1 +1,1 @@
-export { ApiResponse } from '@messages/interfaces/messages.interfaces';
+export * from '@messages/interfaces/messages.interfaces';

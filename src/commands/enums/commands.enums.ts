@@ -1,4 +1,15 @@
-import { COMMANDS_CALLBACK } from '@commands/consts/commands.consts';
+import {
+  CHOOSE_CATEGORY,
+  CALLBACK_PREFIX,
+  ID_PREFIX,
+  CHOOSE_TRANSACTION_TYPE,
+} from '@commands/consts/commands.consts';
+
+export enum CONFIRM_ACTION {
+  EDIT = 'edit',
+  CONFIRM = 'confirm',
+  CANCEL = 'cancel',
+}
 
 export enum TRANSACTION_TYPE {
   INCOME = 'income',
@@ -8,13 +19,13 @@ export enum TRANSACTION_TYPE {
 
 // Команды со слешем
 export enum MAIN_COMMANDS {
-  START = '/start', // готово
-  ADDTRANSACTION = '/addtransaction', // готово
-  ADDCATEGORY = '/addcategory', // готово
-  // Добавление транзакции to do позже
+  START = '/start',
+  ADDTRANSACTION = '/addtransaction',
+  ADDCATEGORY = '/addcategory',
   ADDINCOME = '/addincome',
   ADDEXPENSE = '/addexpense',
   ADDTRANSFER = '/addtransfer',
+  CANCEL = '/cancel',
 }
 
 // Команды без слеша
@@ -22,16 +33,22 @@ export enum TEXT_COMMANDS {
   INCOME = 'Доход',
   EXPENSE = 'Расход',
   TRANSFER = 'Перевод',
-  ADDCATEGORY = 'Добавить категорию', // готово
+  ADDCATEGORY = 'Добавить категорию',
+  ADDTRANSACTION = 'Добавить транзакцию',
+  CANCEL = 'Отмена',
   // Настройки to do позже
   SETTINGS = 'Настройки',
 }
 
 export enum CALLBACK_COMMANDS {
-  STATS = `${COMMANDS_CALLBACK}_stats`,
+  STATS = `${CHOOSE_TRANSACTION_TYPE}stats`,
 
-  INCOME = `${COMMANDS_CALLBACK}_income`,
-  EXPENSE = `${COMMANDS_CALLBACK}_expense`,
-  TRANSFER = `${COMMANDS_CALLBACK}_transfer`,
-  SETTINGS = `${COMMANDS_CALLBACK}_settings`,
+  // Выбор категории транзакции
+  INCOME = `${CHOOSE_TRANSACTION_TYPE}income`,
+  EXPENSE = `${CHOOSE_TRANSACTION_TYPE}expense`,
+  TRANSFER = `${CHOOSE_TRANSACTION_TYPE}transfer`,
+  SETTINGS = `${CHOOSE_TRANSACTION_TYPE}settings`,
+
+  // Выбор типа транзакции
+  CHOOSE_TRANSACTION_CATEGORY = `${CHOOSE_CATEGORY}${CALLBACK_PREFIX}${ID_PREFIX}`,
 }

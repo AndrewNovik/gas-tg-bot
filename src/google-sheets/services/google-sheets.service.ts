@@ -2,6 +2,7 @@ import { CONFIG } from '@config';
 import { MessageService } from '@messages';
 import { TransactionResult, CategoryResult, TransactionCategory } from '@google-sheets/interfaces';
 import { AbstractClassService } from '@shared';
+import { TRANSACTION_TYPE } from '@commands/enums';
 
 export class GoogleSheetsService implements AbstractClassService<GoogleSheetsService> {
   private static instance: GoogleSheetsService;
@@ -138,7 +139,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     }
   }
 
-  public getCategoriesByType(type: string): TransactionCategory[] {
+  public getCategoriesByType(type: TRANSACTION_TYPE): TransactionCategory[] {
     try {
       const sheet = this.connectToGoogleSheet('TransactionCategories');
 
@@ -172,6 +173,46 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
         `❌ Ошибка при получении категорий по типу ${type}: ${error instanceof Error ? error.message : String(error)}`,
       );
       return [];
+    }
+  }
+
+  public getCategoryById(categoryId: string): TransactionCategory | null {
+    try {
+      const sheet = this.connectToGoogleSheet('TransactionCategories');
+
+      if (!sheet) {
+        return null;
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return null; // Если таблица пустая или только заголовки
+      }
+
+      // Получаем все данные начиная со 2-й строки (id, name, type, emoji)
+      const data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+
+      // Ищем категорию по ID
+      const categoryRow = data.find((row) => row[0].toString() === categoryId);
+
+      if (!categoryRow) {
+        return null; // Категория не найдена
+      }
+
+      // Возвращаем найденную категорию
+      return {
+        id: categoryRow[0] as number,
+        name: categoryRow[1] as string,
+        type: categoryRow[2] as string,
+        emoji: categoryRow[3] as string,
+      };
+    } catch (error) {
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка при получении категории по ID ${categoryId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return null;
     }
   }
 

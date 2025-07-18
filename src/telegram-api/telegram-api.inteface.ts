@@ -268,9 +268,16 @@ export interface Update {
   callback_query?: CallbackQuery;
 }
 
-export interface TelegramReplyKeyboard {
+export interface TelegramReplyKeyboardInterface {
   keyboard: string[][];
   resize_keyboard?: boolean;
   one_time_keyboard?: boolean;
   selective?: boolean;
+}
+
+export interface TelegramInlineKeyboardInterface {
+  inline_keyboard: {
+    text: string;
+    callback_data: string;
+  }[][];
 }

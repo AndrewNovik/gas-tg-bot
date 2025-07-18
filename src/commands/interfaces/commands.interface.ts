@@ -1,9 +1,8 @@
-import { CategoryTypeCallBack } from '@state';
-
-export interface Category {
+import { TRANSACTION_TYPE } from '@commands/enums';
+export interface CategoryInterface {
   id: number;
   name: string;
-  type: CategoryTypeCallBack;
+  type: TRANSACTION_TYPE;
   emoji: string;
 }
 
