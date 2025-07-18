@@ -17,6 +17,16 @@ export enum TRANSACTION_TYPE {
   TRANSFER = 'transfer',
 }
 
+export enum SETUP_BOT_COMMANDS {
+  START = 'start',
+  ADDTRANSACTION = 'addtransaction',
+  ADDCATEGORY = 'addcategory',
+  ADDINCOME = 'addincome',
+  ADDEXPENSE = 'addexpense',
+  ADDTRANSFER = 'addtransfer',
+  CANCEL = 'cancel',
+}
+
 // Команды со слешем
 export enum MAIN_COMMANDS {
   START = '/start',
@@ -30,14 +40,27 @@ export enum MAIN_COMMANDS {
 
 // Команды без слеша
 export enum TEXT_COMMANDS {
-  INCOME = 'Доход',
-  EXPENSE = 'Расход',
-  TRANSFER = 'Перевод',
-  ADDCATEGORY = 'Добавить категорию',
-  ADDTRANSACTION = 'Добавить транзакцию',
-  CANCEL = 'Отмена',
+  INCOME = '💵 Доход',
+  EXPENSE = '💸 Расход',
+  TRANSFER = '💸 Перевод',
+  ADDCATEGORY = '📝 Добавить категорию',
+  ADDTRANSACTION = '📝 Добавить транзакцию',
+  CANCEL = '❌ Отмена',
   // Настройки to do позже
-  SETTINGS = 'Настройки',
+  SETTINGS = '⚙️ Настройки',
+}
+
+export enum TEXT_MESSAGES {
+  RESET_USER_STATE = '🔄 Начнем сначала! Выбери действие:',
+  CATEGORY_ADDED = '✅ Категория успешно добавлена',
+  TRANSACTION_ADDED = '✅ Транзакция успешно добавлена',
+  CATEGORY_NOT_ADDED = '❌ Ошибка при добавлении категории',
+  CATEGORY_NOT_FOUND = '❌ Категория не найдена',
+  CATEGORY_ALREADY_EXISTS = '❌ Категория уже существует',
+  CATEGORY_DELETED = '✅ Категория успешно удалена',
+  TRANSACTION_NOT_ADDED = '❌ Ошибка при добавлении транзакции',
+  CANCEL_CATEGORY = '❌ Создание категории отменено',
+  NEW_ACTION = '🔥 Отлично, что ещё добавим?',
 }
 
 export enum CALLBACK_COMMANDS {
@@ -47,7 +70,6 @@ export enum CALLBACK_COMMANDS {
   INCOME = `${CHOOSE_TRANSACTION_TYPE}income`,
   EXPENSE = `${CHOOSE_TRANSACTION_TYPE}expense`,
   TRANSFER = `${CHOOSE_TRANSACTION_TYPE}transfer`,
-  SETTINGS = `${CHOOSE_TRANSACTION_TYPE}settings`,
 
   // Выбор типа транзакции
   CHOOSE_TRANSACTION_CATEGORY = `${CHOOSE_CATEGORY}${CALLBACK_PREFIX}${ID_PREFIX}`,

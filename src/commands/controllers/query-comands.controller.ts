@@ -2,7 +2,7 @@ import { CONFIG } from '@config';
 import { StateManager, STATE_STEPS } from '@state';
 import { MessageService } from '@messages';
 import { GoogleSheetsService } from '@google-sheets';
-import { CallbackQuery, TelegramReplyKeyboardInterface } from '@telegram-api';
+import { CallbackQuery } from '@telegram-api';
 import { AbstractClassService } from '@shared';
 import {
   USERS_ID,
@@ -12,18 +12,20 @@ import {
   CALLBACK_PREFIX,
   CONFIRM_ACTION,
 } from '@commands';
-import { TransactionCategory } from '@google-sheets/interfaces';
+import { QueryCommandsFacade } from './query-commands.facade';
 
 export class QueryCommandsController implements AbstractClassService<QueryCommandsController> {
   private static instance: QueryCommandsController;
   private stateManager: StateManager;
   private messageService: MessageService;
   public readonly googleSheetsService: GoogleSheetsService;
+  public readonly queryCommandsFacade: QueryCommandsFacade;
 
   private constructor() {
     this.stateManager = StateManager.getInstance();
     this.messageService = MessageService.getInstance();
     this.googleSheetsService = GoogleSheetsService.getInstance();
+    this.queryCommandsFacade = QueryCommandsFacade.getInstance();
   }
 
   public static getInstance(): QueryCommandsController {
@@ -49,7 +51,7 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
     const firstName = query.from.first_name;
 
     // Ответ на callback - ОБЯЗАТЕЛЬНО в течение 10 секунд
-    this.answerCallbackQuery(query.id);
+    this.queryCommandsFacade.answerCallbackQuery(query.id);
 
     const state = this.stateManager.getUserState(chatId);
 
@@ -60,168 +62,73 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
       state?.step === STATE_STEPS.ADD_TRANSACTION_CATEGORY_TYPE
     ) {
       const categoryId = data.replace(CALLBACK_COMMANDS.CHOOSE_TRANSACTION_CATEGORY, '');
-      this.handleChooseTransactionCategory(chatId, categoryId);
+      this.queryCommandsFacade.handleChooseTransactionCategory(chatId, categoryId);
       return;
     }
 
-    // if (data && data.startsWith(`${CONFIRM_DESICION}${CALLBACK_PREFIX}`) && state?.step === STATE_STEPS.ADD_TRANSACTION_AMOUNT) {
-    //   const action: CONFIRM_ACTION = data.replace(`${CONFIRM_DESICION}${CALLBACK_PREFIX}`, '') as unknown as CONFIRM_ACTION;
-    //   switch (action) {
-    //     case CONFIRM_ACTION.CONFIRM:
-    //       this.handleConfirmTransaction(chatId, state);
-    //       return;
-    //     case CONFIRM_ACTION.CANCEL:
-    //       this.
-    //       return;
-    //     case CONFIRM_ACTION.EDIT:
-    //       this.handleEditTransaction(chatId, state);
-    //       return;
-    //     default:
-    //       this.messageService.sendText(chatId, 'Неизвестный callback');
-    //       return;
-    //   }
-    // }
+    if (
+      state?.step === STATE_STEPS.ADD_TRANSACTION_CONFIRM &&
+      data &&
+      data.startsWith(`${CONFIRM_DESICION}${CALLBACK_PREFIX}`)
+    ) {
+      const action: CONFIRM_ACTION = data.replace(
+        `${CONFIRM_DESICION}${CALLBACK_PREFIX}`,
+        '',
+      ) as unknown as CONFIRM_ACTION;
+      switch (action) {
+        case CONFIRM_ACTION.CONFIRM:
+          this.queryCommandsFacade.handleConfirmTransaction(chatId, state);
+          return;
+        case CONFIRM_ACTION.CANCEL:
+          this.queryCommandsFacade.handleCancelTransaction(chatId, state);
+          return;
+        case CONFIRM_ACTION.EDIT:
+          this.queryCommandsFacade.handleEditTransaction(chatId, state);
+          return;
+        default:
+          this.messageService.sendText(chatId, 'Неизвестный callback');
+          return;
+      }
+    }
+
+    if (
+      state?.step === STATE_STEPS.ADD_CATEGORY_CONFIRM &&
+      data &&
+      data.startsWith(`${CONFIRM_DESICION}${CALLBACK_PREFIX}`)
+    ) {
+      const action: CONFIRM_ACTION = data.replace(
+        `${CONFIRM_DESICION}${CALLBACK_PREFIX}`,
+        '',
+      ) as unknown as CONFIRM_ACTION;
+      switch (action) {
+        case CONFIRM_ACTION.CONFIRM:
+          this.queryCommandsFacade.handleConfirmCategory(chatId, state);
+          return;
+        case CONFIRM_ACTION.CANCEL:
+          this.queryCommandsFacade.handleCancelCategory(chatId);
+          return;
+        case CONFIRM_ACTION.EDIT:
+          this.queryCommandsFacade.handleEditCategory(chatId, state);
+          return;
+        default:
+          this.messageService.sendText(chatId, 'Неизвестный callback');
+      }
+    }
 
     switch (data) {
       // Обработка создания типов категорий
+      case CALLBACK_COMMANDS.INCOME:
+        this.queryCommandsFacade.handleAddinngNewCategoryType(chatId, TRANSACTION_TYPE.INCOME);
+        return;
+      case CALLBACK_COMMANDS.EXPENSE:
+        this.queryCommandsFacade.handleAddinngNewCategoryType(chatId, TRANSACTION_TYPE.EXPENSE);
+        return;
+      case CALLBACK_COMMANDS.TRANSFER:
+        this.queryCommandsFacade.handleAddinngNewCategoryType(chatId, TRANSACTION_TYPE.TRANSFER);
+        return;
 
       default:
         this.messageService.sendText(chatId, 'Неизвестный callback');
     }
-  }
-
-  private handleCategoryTypeSelection(chatId: number, type: TRANSACTION_TYPE): void {
-    try {
-      // Обновляем состояние с типом
-      this.stateManager.updateUserStateData(chatId, { type: type });
-
-      // Переходим к вводу эмодзи (обновляем только тип, сохраняя данные)
-      this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_CATEGORY_EMOJI);
-
-      const typeNames = {
-        [TRANSACTION_TYPE.INCOME]: 'Доход',
-        [TRANSACTION_TYPE.EXPENSE]: 'Расход',
-        [TRANSACTION_TYPE.TRANSFER]: 'Перевод',
-      };
-
-      const message = `✅ Тип: ${typeNames[type]}\n\n` + `😊 Теперь введите эмодзи для категории:`;
-
-      this.messageService.sendText(chatId, message);
-    } catch (error) {
-      this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
-        `❌ Ошибка в handleCategoryTypeSelection для ${chatId}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  private handleCancelAddCategory(chatId: number): void {
-    this.stateManager.clearUserState(chatId);
-    this.messageService.sendText(chatId, '❌ Добавление категории отменено');
-  }
-
-  private answerCallbackQuery(callbackQueryId: string): any {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/answerCallbackQuery`;
-
-    const payload = {
-      callback_query_id: callbackQueryId,
-    };
-
-    const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true,
-    };
-
-    try {
-      const response = UrlFetchApp.fetch(url, options);
-      const result = JSON.parse(response.getContentText());
-
-      return result;
-    } catch (error) {
-      this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
-        `❌ Критическая ошибка answerCallbackQuery: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      return { ok: false, description: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  private handleChooseTransactionCategory(chatId: number, categoryId: string): void {
-    try {
-      // Получаем категорию по ID
-      const category = this.googleSheetsService.getCategoryById(categoryId);
-
-      if (!category) {
-        this.messageService.sendText(chatId, '❌ Категория не найдена');
-        return;
-      }
-
-      // Обновляем состояние пользователя с выбранной категорией
-      this.stateManager.updateUserStateData(chatId, {
-        transactionCategory: category,
-      });
-
-      // Переходим к следующему шагу (например, ввод суммы)
-      this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_AMOUNT);
-
-      this.messageService.sendText(chatId, `Введи сумму:`);
-    } catch (error) {
-      this.messageService.sendText(
-        chatId,
-        `❌ Ошибка при выборе категории: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  private handleAddTransaction(chatId: number, type: TRANSACTION_TYPE): void {
-    try {
-      // Получаем категории по типу
-      const categories: TransactionCategory[] = this.googleSheetsService.getCategoriesByType(type);
-
-      if (categories.length === 0) {
-        this.messageService.sendText(
-          chatId,
-          `❌ Категории для типа "${type}" не найдены. Сначала добавьте категории через /addcategory`,
-        );
-        return;
-      }
-
-      // Создаем клавиатуру с категориями
-      const keyboard: TelegramReplyKeyboardInterface = {
-        keyboard: this.createCategoryKeyboard(categories),
-        resize_keyboard: true,
-        one_time_keyboard: false,
-      };
-
-      this.messageService.sendReplyMarkup(chatId, `Выбери категорию`, keyboard);
-    } catch (error) {
-      this.messageService.sendText(
-        chatId,
-        `❌ Ошибка при получении категорий: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  private createCategoryKeyboard(categories: TransactionCategory[]): string[][] {
-    const keyboard: string[][] = [];
-    const itemsPerRow = 2; // 2 кнопки в ряду
-
-    for (let i = 0; i < categories.length; i += itemsPerRow) {
-      const row: string[] = [];
-
-      for (let j = 0; j < itemsPerRow && i + j < categories.length; j++) {
-        const category = categories[i + j];
-        row.push(`${category.emoji} ${category.name}`);
-      }
-
-      keyboard.push(row);
-    }
-
-    return keyboard;
   }
 }

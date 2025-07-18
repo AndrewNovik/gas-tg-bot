@@ -1,8 +1,14 @@
-import { CONFIRM_ACTION, MAIN_COMMANDS, TEXT_COMMANDS } from '@commands/enums';
+import {
+  CALLBACK_COMMANDS,
+  CONFIRM_ACTION,
+  SETUP_BOT_COMMANDS,
+  TEXT_COMMANDS,
+} from '@commands/enums';
 import { BotCommand } from '@commands/interfaces';
 import { TelegramInlineKeyboardInterface, TelegramReplyKeyboardInterface } from '@telegram-api';
 
 export const USERS_ID = [396628436, 1009697451];
+
 // PREFIXES
 export const ID_PREFIX = 'id_';
 export const CALLBACK_PREFIX = 'callback_';
@@ -31,17 +37,17 @@ export const confirmInlineKeyboard: TelegramInlineKeyboardInterface = {
   inline_keyboard: [
     [
       {
-        text: `${CONFIRM_ACTION.EDIT}`,
+        text: `✍️ ${CONFIRM_ACTION.EDIT}`,
         callback_data: `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.EDIT}`,
       },
       {
-        text: `${CONFIRM_ACTION.CANCEL}`,
+        text: `❌ ${CONFIRM_ACTION.CANCEL}`,
         callback_data: `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.CANCEL}`,
       },
     ],
     [
       {
-        text: `${CONFIRM_ACTION.CONFIRM}`,
+        text: `✅ ${CONFIRM_ACTION.CONFIRM}`,
         callback_data: `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.CONFIRM}`,
       },
     ],
@@ -50,31 +56,50 @@ export const confirmInlineKeyboard: TelegramInlineKeyboardInterface = {
 
 export const setupBotCommands: BotCommand[] = [
   {
-    command: MAIN_COMMANDS.START,
-    description: 'Начало работы с ботом',
+    command: SETUP_BOT_COMMANDS.START,
+    description: '👋 Начало работы с ботом',
   },
   {
-    command: MAIN_COMMANDS.ADDTRANSACTION,
-    description: 'Добавить новую транзакцию в таблицу',
+    command: SETUP_BOT_COMMANDS.ADDTRANSACTION,
+    description: '📝 Добавить новую транзакцию в таблицу',
   },
   {
-    command: MAIN_COMMANDS.ADDCATEGORY,
-    description: 'Добавить новую категорию транзакций',
+    command: SETUP_BOT_COMMANDS.ADDCATEGORY,
+    description: '📝 Добавить новую категорию транзакций',
   },
   {
-    command: MAIN_COMMANDS.ADDINCOME,
-    description: 'Добавить доход',
+    command: SETUP_BOT_COMMANDS.ADDINCOME,
+    description: '💵 Добавить доход',
   },
   {
-    command: MAIN_COMMANDS.ADDEXPENSE,
-    description: 'Добавить расход',
+    command: SETUP_BOT_COMMANDS.ADDEXPENSE,
+    description: '💸 Добавить расход',
   },
   {
-    command: MAIN_COMMANDS.ADDTRANSFER,
-    description: 'Добавить перевод',
+    command: SETUP_BOT_COMMANDS.ADDTRANSFER,
+    description: '💸 Добавить перевод',
   },
   {
-    command: MAIN_COMMANDS.CANCEL,
-    description: 'Отменить текущие действия',
+    command: SETUP_BOT_COMMANDS.CANCEL,
+    description: '❌ Отменить текущие действия',
   },
 ];
+
+export const addCategoryTypeInlienKeyboard: TelegramInlineKeyboardInterface = {
+  inline_keyboard: [
+    [
+      {
+        text: `💵 Доход`,
+        callback_data: `${CALLBACK_COMMANDS.INCOME}`,
+      },
+      {
+        text: `💸 Расход`,
+        callback_data: `${CALLBACK_COMMANDS.EXPENSE}`,
+      },
+      {
+        text: `💸 Перевод`,
+        callback_data: `${CALLBACK_COMMANDS.TRANSFER}`,
+      },
+    ],
+  ],
+};

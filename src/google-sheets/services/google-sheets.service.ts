@@ -3,6 +3,7 @@ import { MessageService } from '@messages';
 import { TransactionResult, CategoryResult, TransactionCategory } from '@google-sheets/interfaces';
 import { AbstractClassService } from '@shared';
 import { TRANSACTION_TYPE } from '@commands/enums';
+import { GOOGLE_SHEETS_NAMES } from '@google-sheets/consts/google-sheets.consts';
 
 export class GoogleSheetsService implements AbstractClassService<GoogleSheetsService> {
   private static instance: GoogleSheetsService;
@@ -19,13 +20,47 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     return GoogleSheetsService.instance;
   }
 
+  public getNextTransactionId(): number {
+    try {
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTIONS);
+
+      if (!sheet) {
+        return 0;
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return 0; // Если таблица пустая или только заголовки, начинаем с 0
+      }
+
+      // Получаем все ID из первой колонки (начиная со 2-й строки)
+      const idColumn = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+      const ids = idColumn.map((row) => row[0]).filter((id) => id !== '' && id !== null);
+
+      if (ids.length === 0) {
+        return 0;
+      }
+
+      // Находим максимальный ID и инкрементируем
+      const maxId = Math.max(...ids);
+      return maxId + 1;
+    } catch (error) {
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка при получении следующего ID транзакции: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return 0;
+    }
+  }
+
   public addTransaction(
-    description: string,
-    amount: number,
-    category: string = 'Прочее',
+    transactionType: string,
+    amount: string,
+    transactionCategory: string,
   ): TransactionResult {
     try {
-      const sheet = this.connectToGoogleSheet('Transactions');
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTIONS);
 
       if (!sheet) {
         return {
@@ -33,6 +68,9 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
           error: 'Лист Transactions не найден',
         };
       }
+
+      // Получаем следующий ID транзакции
+      const nextId = this.getNextTransactionId();
 
       // Получаем текущую дату и время
       const now = new Date();
@@ -42,13 +80,14 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       // Находим первую свободную строку
       const nextRow = sheet.getLastRow() + 1;
 
-      // Подготавливаем данные для записи
-      const rowData: [string, string, string, number, string] = [
+      // Подготавливаем данные для записи в порядке: id, transactionType, amount, transactionCategory, date, time
+      const rowData: [number, string, string, string, string, string] = [
+        nextId, // ID
+        transactionType, // Тип транзакции
+        amount, // Сумма
+        transactionCategory, // Категория
         date, // Дата
         time, // Время
-        description, // Описание
-        amount, // Сумма
-        category, // Категория
       ];
 
       // Записываем данные в строку
@@ -69,7 +108,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
 
   public getNextCategoryId(): number {
     try {
-      const sheet = this.connectToGoogleSheet('TransactionCategories');
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTION_CATEGORIES);
 
       if (!sheet) {
         return 0;
@@ -101,9 +140,9 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     }
   }
 
-  public addCategory(name: string, type: string, emoji: string): CategoryResult {
+  public addCategory(name: string, type: TRANSACTION_TYPE, emoji: string): CategoryResult {
     try {
-      const sheet = this.connectToGoogleSheet('TransactionCategories');
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTION_CATEGORIES);
 
       if (!sheet) {
         return {
@@ -112,12 +151,23 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
         };
       }
 
+      // Проверяем существование категории с таким же именем и типом
+      if (this.isCategoryExists(name, type)) {
+        return {
+          success: false,
+          error: `Категория "${name}" для типа "${type}" уже существует`,
+        };
+      }
+
+      // Получаем следующий ID категории
+      const nextId = this.getNextCategoryId();
+
       // Находим первую свободную строку
       const nextRow = sheet.getLastRow() + 1;
 
-      // Подготавливаем данные для записи
+      // Подготавливаем данные для записи в порядке: id, name, type, emoji
       const rowData: [number, string, string, string] = [
-        this.getNextCategoryId(), // ID
+        nextId, // ID
         name, // Название
         type, // Тип (income/expense/transfer)
         emoji, // Эмодзи
@@ -141,7 +191,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
 
   public getCategoriesByType(type: TRANSACTION_TYPE): TransactionCategory[] {
     try {
-      const sheet = this.connectToGoogleSheet('TransactionCategories');
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTION_CATEGORIES);
 
       if (!sheet) {
         return [];
@@ -178,7 +228,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
 
   public getCategoryById(categoryId: string): TransactionCategory | null {
     try {
-      const sheet = this.connectToGoogleSheet('TransactionCategories');
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTION_CATEGORIES);
 
       if (!sheet) {
         return null;
@@ -213,6 +263,38 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
         `❌ Ошибка при получении категории по ID ${categoryId}: ${error instanceof Error ? error.message : String(error)}`,
       );
       return null;
+    }
+  }
+
+  public isCategoryExists(name: string, type: TRANSACTION_TYPE): boolean {
+    try {
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTION_CATEGORIES);
+
+      if (!sheet) {
+        return false;
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return false; // Если таблица пустая или только заголовки
+      }
+
+      // Получаем все данные начиная со 2-й строки (id, name, type, emoji)
+      const data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+
+      // Проверяем существование категории с таким же именем и типом
+      const existingCategory = data.find(
+        (row) => row[1].toLowerCase() === name.toLowerCase() && row[2] === type,
+      );
+
+      return !!existingCategory;
+    } catch (error) {
+      this.messageService.sendText(
+        Number(CONFIG.ADMIN_ID),
+        `❌ Ошибка при проверке существования категории: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return false;
     }
   }
 

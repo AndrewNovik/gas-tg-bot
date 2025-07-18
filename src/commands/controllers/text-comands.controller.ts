@@ -66,15 +66,18 @@ export class TextCommandsController implements AbstractClassService<TextCommands
         this.textCommandsFacade.mainCommandStart(chatId, firstName);
         break;
 
-      case MAIN_COMMANDS.ADDTRANSACTION || TEXT_COMMANDS.ADDTRANSACTION:
+      case MAIN_COMMANDS.ADDTRANSACTION:
+      case TEXT_COMMANDS.ADDTRANSACTION:
         this.textCommandsFacade.mainCommandAddTransactionStart(chatId, firstName);
         break;
 
-      case MAIN_COMMANDS.ADDCATEGORY || TEXT_COMMANDS.ADDCATEGORY:
+      case MAIN_COMMANDS.ADDCATEGORY:
+      case TEXT_COMMANDS.ADDCATEGORY:
         this.textCommandsFacade.mainCommandAddCategoryStart(chatId);
         break;
 
       case MAIN_COMMANDS.ADDINCOME:
+      case TEXT_COMMANDS.INCOME:
         this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
           chatId,
           TRANSACTION_TYPE.INCOME,
@@ -82,6 +85,7 @@ export class TextCommandsController implements AbstractClassService<TextCommands
         break;
 
       case MAIN_COMMANDS.ADDEXPENSE:
+      case TEXT_COMMANDS.EXPENSE:
         this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
           chatId,
           TRANSACTION_TYPE.EXPENSE,
@@ -89,13 +93,15 @@ export class TextCommandsController implements AbstractClassService<TextCommands
         break;
 
       case MAIN_COMMANDS.ADDTRANSFER:
+      case TEXT_COMMANDS.TRANSFER:
         this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
           chatId,
           TRANSACTION_TYPE.TRANSFER,
         );
         break;
 
-      case MAIN_COMMANDS.CANCEL || TEXT_COMMANDS.CANCEL:
+      case MAIN_COMMANDS.CANCEL:
+      case TEXT_COMMANDS.CANCEL:
         this.textCommandsFacade.mainCommandCancel(chatId);
         break;
 
@@ -104,7 +110,8 @@ export class TextCommandsController implements AbstractClassService<TextCommands
         const currentUserState = this.stateManager.getUserState(chatId);
 
         switch (currentUserState?.step) {
-          case STATE_STEPS.DEFAULT || STATE_STEPS.ADD_TRANSACTION_TYPE:
+          case STATE_STEPS.DEFAULT:
+          case STATE_STEPS.ADD_TRANSACTION_TYPE:
             switch (text) {
               case TEXT_COMMANDS.INCOME:
                 this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
@@ -124,6 +131,15 @@ export class TextCommandsController implements AbstractClassService<TextCommands
                   TRANSACTION_TYPE.TRANSFER,
                 );
                 break;
+              case TEXT_COMMANDS.ADDCATEGORY:
+                this.textCommandsFacade.mainCommandAddCategoryStart(chatId);
+                break;
+              case TEXT_COMMANDS.ADDTRANSACTION:
+                this.textCommandsFacade.mainCommandAddTransactionStart(chatId, firstName);
+                break;
+              case TEXT_COMMANDS.CANCEL:
+                this.textCommandsFacade.mainCommandCancel(chatId);
+                break;
 
               default:
                 this.textCommandsFacade.noSuchCommandFound(chatId, text);
@@ -135,58 +151,18 @@ export class TextCommandsController implements AbstractClassService<TextCommands
             this.textCommandsFacade.handleAddTransactionAmount(chatId, text);
             break;
 
+          case STATE_STEPS.ADD_CATEGORY_NAME:
+            this.textCommandsFacade.handleAddCategoryName(chatId, text);
+            break;
+
+          case STATE_STEPS.ADD_CATEGORY_EMOJI:
+            this.textCommandsFacade.handleAddCategoryEmoji(chatId, text);
+            break;
+
           default:
             this.textCommandsFacade.noSuchCommandFound(chatId, text);
             break;
         }
-    }
-  }
-
-  private handleCategoryEmojiInput(chatId: number, emoji: string): void {
-    try {
-      const state: UserStateInterface | null = this.stateManager.getUserState(chatId);
-      if (!state) {
-        this.messageService.sendText(
-          chatId,
-          '❌ Состояние пользователя не найдено. Начните заново с /addcategory',
-        );
-        return;
-      }
-      this.messageService.sendText(chatId, JSON.stringify(state));
-      const { name, type } = state.data;
-
-      const typeNames: Record<string, string> = {
-        [CREATE_CATEGORY_TYPE_CALLBACK.INCOME]: TRANSACTION_TYPE.INCOME,
-        [CREATE_CATEGORY_TYPE_CALLBACK.EXPENSE]: TRANSACTION_TYPE.EXPENSE,
-        [CREATE_CATEGORY_TYPE_CALLBACK.TRANSFER]: TRANSACTION_TYPE.TRANSFER,
-      };
-
-      // Добавляем категорию в Google Sheets
-      const result = this.googleSheetsService.addCategory(name, typeNames[type], emoji);
-
-      if (result.success) {
-        const message =
-          `✅ Категория успешно добавлена!\n\n` +
-          `📝 Название: ${name}\n` +
-          `📂 Тип: ${typeNames[type]}\n` +
-          `😊 Эмодзи: ${emoji}\n`;
-
-        this.messageService.sendText(chatId, message);
-      } else {
-        this.messageService.sendText(
-          chatId,
-          `❌ Ошибка при добавлении категории: ${result.error || 'Неизвестная ошибка'}`,
-        );
-      }
-
-      // Очищаем состояние пользователя
-      this.stateManager.clearUserState(chatId);
-    } catch (error) {
-      this.messageService.sendText(
-        chatId,
-        `❌ Ошибка в handleCategoryEmojiInput: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      this.stateManager.clearUserState(chatId);
     }
   }
 }

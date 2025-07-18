@@ -1,6 +1,6 @@
 export interface TransactionResult {
   success: boolean;
-  data?: [string, string, string, number, string];
+  data?: [number, string, string, string, string, string];
   row?: number;
   error?: string;
 }
