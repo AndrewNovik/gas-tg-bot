@@ -77,7 +77,7 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
       ) as unknown as CONFIRM_ACTION;
       switch (action) {
         case CONFIRM_ACTION.CONFIRM:
-          this.queryCommandsFacade.handleConfirmTransaction(chatId, state);
+          this.queryCommandsFacade.handleConfirmTransaction(chatId, state, firstName);
           return;
         case CONFIRM_ACTION.CANCEL:
           this.queryCommandsFacade.handleCancelTransaction(chatId, state);
@@ -102,7 +102,7 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
       ) as unknown as CONFIRM_ACTION;
       switch (action) {
         case CONFIRM_ACTION.CONFIRM:
-          this.queryCommandsFacade.handleConfirmCategory(chatId, state);
+          this.queryCommandsFacade.handleConfirmCategory(chatId, state, firstName);
           return;
         case CONFIRM_ACTION.CANCEL:
           this.queryCommandsFacade.handleCancelCategory(chatId);

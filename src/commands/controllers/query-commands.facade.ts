@@ -4,7 +4,7 @@ import { MessageService } from '@messages/services/message.service';
 import { GoogleSheetsService } from '@google-sheets/services';
 import { TEXT_MESSAGES, TRANSACTION_TYPE } from '@commands/enums';
 import { TransactionCategory } from '@google-sheets/interfaces';
-import { startMenuReplyKeyboard } from '@commands/consts';
+import { startMenuReplyKeyboard, USERS_ID } from '@commands/consts';
 import { CONFIG } from '@config/config';
 
 export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFacade> {
@@ -84,7 +84,11 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
     }
   }
 
-  public handleConfirmTransaction(chatId: number, state: UserStateInterface): void {
+  public handleConfirmTransaction(
+    chatId: number,
+    state: UserStateInterface,
+    firstName: string,
+  ): void {
     try {
       const data = state.data;
 
@@ -113,10 +117,12 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
       );
 
       if (result.success) {
-        this.messageService.sendText(
-          chatId,
-          `${TEXT_MESSAGES.TRANSACTION_ADDED}\n\n📊 Данные:\nТип: ${transactionType}\nСумма: ${amount}\nКатегория: ${transactionCategory.name}`,
-        );
+        USERS_ID.forEach((id) => {
+          this.messageService.sendText(
+            id,
+            `✅ ${firstName} add ${transactionType} for ${amount} BYN in category: ${transactionCategory.name}`,
+          );
+        });
       } else {
         this.messageService.sendText(
           chatId,
@@ -169,7 +175,7 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
     this.messageService.sendText(chatId, `📝 Введи эмодзи для категории:`);
   }
 
-  public handleConfirmCategory(chatId: number, state: UserStateInterface): void {
+  public handleConfirmCategory(chatId: number, state: UserStateInterface, firstName: string): void {
     try {
       const data = state.data;
 
@@ -210,10 +216,12 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
       );
 
       if (result.success) {
-        this.messageService.sendText(
-          chatId,
-          `${TEXT_MESSAGES.CATEGORY_ADDED}\n\n📊 Данные:\nНазвание: ${categoryName}\nТип: ${categoryType}\nЭмодзи: ${categoryEmoji}`,
-        );
+        USERS_ID.forEach((id) => {
+          this.messageService.sendText(
+            id,
+            `✅ ${firstName} add new ${categoryType} category: ${categoryName} ${categoryEmoji}`,
+          );
+        });
       } else {
         this.messageService.sendText(
           chatId,
