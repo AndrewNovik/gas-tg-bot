@@ -1,3 +1,4 @@
 node_modules/
 gas/
 .clasp.json
+config.ts

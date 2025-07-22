@@ -5,7 +5,7 @@ import { GoogleSheetsService } from '@google-sheets/services';
 import { TEXT_MESSAGES, TRANSACTION_TYPE } from '@commands/enums';
 import { TransactionCategory } from '@google-sheets/interfaces';
 import { startMenuReplyKeyboard, USERS_ID } from '@commands/consts';
-import { CONFIG } from '@config/config';
+import { getAdminId, getApiUrl, getToken } from '@shared';
 
 export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFacade> {
   private static instance: QueryCommandsFacade;
@@ -27,7 +27,7 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
   }
 
   public answerCallbackQuery(callbackQueryId: string): any {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/answerCallbackQuery`;
+    const url = `${getApiUrl()}${getToken()}/answerCallbackQuery`;
 
     const payload = {
       callback_query_id: callbackQueryId,
@@ -49,7 +49,7 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
       return result;
     } catch (error) {
       this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
+        Number(getAdminId()),
         `❌ Критическая ошибка answerCallbackQuery: ${error instanceof Error ? error.message : String(error)}`,
       );
 

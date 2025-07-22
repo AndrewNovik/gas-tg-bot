@@ -1,4 +1,4 @@
-import { CONFIG } from '@config';
+import { getApiUrl, getToken, getWebAppId } from '@shared';
 
 export class WebhookService {
   private static instance: WebhookService;
@@ -13,8 +13,8 @@ export class WebhookService {
   }
 
   public setWebhook(): void {
-    const webUrl = `https://script.google.com/macros/s/${CONFIG.WEB_APP_ID}/exec`;
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/setWebhook`;
+    const webUrl = `https://script.google.com/macros/s/${getWebAppId()}/exec`;
+    const url = `${getApiUrl()}${getToken()}/setWebhook`;
 
     const payload = {
       url: webUrl,
@@ -46,7 +46,7 @@ export class WebhookService {
   }
 
   public deleteWebhook(): void {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/deleteWebhook`;
+    const url = `${getApiUrl()}${getToken()}/deleteWebhook`;
 
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       method: 'post',

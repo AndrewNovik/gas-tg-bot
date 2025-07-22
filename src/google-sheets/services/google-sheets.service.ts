@@ -1,7 +1,6 @@
-import { CONFIG } from '@config';
 import { MessageService } from '@messages';
 import { TransactionResult, CategoryResult, TransactionCategory } from '@google-sheets/interfaces';
-import { AbstractClassService } from '@shared';
+import { AbstractClassService, getAdminId, getSpreadsheetId } from '@shared';
 import { TRANSACTION_TYPE } from '@commands/enums';
 import { GOOGLE_SHEETS_NAMES } from '@google-sheets/consts/google-sheets.consts';
 
@@ -47,7 +46,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       return maxId + 1;
     } catch (error) {
       this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
+        Number(getAdminId()),
         `❌ Ошибка при получении следующего ID транзакции: ${error instanceof Error ? error.message : String(error)}`,
       );
       return 0;
@@ -133,7 +132,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       return maxId + 1;
     } catch (error) {
       this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
+        Number(getAdminId()),
         `❌ Ошибка при получении следующего ID категории: ${error instanceof Error ? error.message : String(error)}`,
       );
       return 0;
@@ -219,7 +218,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       return filteredCategories;
     } catch (error) {
       this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
+        Number(getAdminId()),
         `❌ Ошибка при получении категорий по типу ${type}: ${error instanceof Error ? error.message : String(error)}`,
       );
       return [];
@@ -259,7 +258,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       };
     } catch (error) {
       this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
+        Number(getAdminId()),
         `❌ Ошибка при получении категории по ID ${categoryId}: ${error instanceof Error ? error.message : String(error)}`,
       );
       return null;
@@ -291,7 +290,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       return !!existingCategory;
     } catch (error) {
       this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
+        Number(getAdminId()),
         `❌ Ошибка при проверке существования категории: ${error instanceof Error ? error.message : String(error)}`,
       );
       return false;
@@ -299,12 +298,12 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
   }
 
   public connectToGoogleSheet(sheetName: string): GoogleAppsScript.Spreadsheet.Sheet | null {
-    const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const spreadsheet = SpreadsheetApp.openById(getSpreadsheetId()!);
     const sheet = spreadsheet.getSheetByName(sheetName);
 
     if (!sheet) {
       this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
+        Number(getAdminId()),
         `❌ Лист "${sheetName}" не найден в таблице`,
       );
       return null;

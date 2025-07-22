@@ -1,11 +1,4 @@
-import { CONFIG } from '@config';
-import {
-  StateManager,
-  STATE_STEPS,
-  CREATE_CATEGORY_TYPE_CALLBACK,
-  KEYBOARD_CANCEL_CALLBACK,
-  UserStateInterface,
-} from '@state';
+import { StateManager, STATE_STEPS } from '@state';
 import { MessageService } from '@messages';
 import { GoogleSheetsService } from '@google-sheets';
 import {

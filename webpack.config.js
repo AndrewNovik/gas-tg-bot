@@ -22,7 +22,6 @@ module.exports = (env, argv) => {
         '@state': path.resolve(__dirname, 'src/state'),
         '@webhooks': path.resolve(__dirname, 'src/webhooks'),
         '@google-sheets': path.resolve(__dirname, 'src/google-sheets'),
-        '@config': path.resolve(__dirname, 'src/config'),
         '@telegram-api': path.resolve(__dirname, 'src/telegram-api'),
         '@shared': path.resolve(__dirname, 'src/shared'),
       },

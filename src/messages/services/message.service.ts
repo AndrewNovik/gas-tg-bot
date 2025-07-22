@@ -1,7 +1,6 @@
 import { startMenuReplyKeyboard } from '@commands';
-import { CONFIG } from '@config';
 import { ApiResponse } from '@messages';
-import { AbstractClassService } from '@shared';
+import { AbstractClassService, getAdminId, getApiUrl, getToken } from '@shared';
 import { CACHE_TIMEOUT } from '@state';
 import { TelegramInlineKeyboardInterface, TelegramReplyKeyboardInterface } from '@telegram-api';
 
@@ -16,7 +15,7 @@ export class MessageService implements AbstractClassService<MessageService> {
   }
 
   public sendText(chatId: number, text: string): ApiResponse {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
+    const url = `${getApiUrl()}${getToken()}/sendMessage`;
 
     const payload = {
       chat_id: chatId,
@@ -42,7 +41,7 @@ export class MessageService implements AbstractClassService<MessageService> {
   }
 
   public answerCallbackQuery(callbackQueryId: string): ApiResponse {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/answerCallbackQuery`;
+    const url = `${getApiUrl()}${getToken()}/answerCallbackQuery`;
 
     const payload = {
       callback_query_id: callbackQueryId,
@@ -72,7 +71,7 @@ export class MessageService implements AbstractClassService<MessageService> {
     messageText: string,
     keyboard: TelegramInlineKeyboardInterface,
   ): ApiResponse {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
+    const url = `${getApiUrl()}${getToken()}/sendMessage`;
     const payload = {
       chat_id: chatId,
       text: messageText,
@@ -98,7 +97,7 @@ export class MessageService implements AbstractClassService<MessageService> {
     messageText: string,
     keyboard: TelegramReplyKeyboardInterface,
   ): ApiResponse {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
+    const url = `${getApiUrl()}${getToken()}/sendMessage`;
     const payload = {
       chat_id: chatId,
       text: messageText,
@@ -123,9 +122,9 @@ export class MessageService implements AbstractClassService<MessageService> {
 
   public sendAdminMessage(message: string): void {
     try {
-      const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/sendMessage`;
+      const url = `${getApiUrl()}${getToken()}/sendMessage`;
       const payload = {
-        chat_id: CONFIG.ADMIN_ID,
+        chat_id: Number(getAdminId()),
         text: message,
         parse_mode: 'HTML',
       };

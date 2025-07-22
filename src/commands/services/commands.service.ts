@@ -1,7 +1,6 @@
-import { CONFIG } from '@config';
 import { BotCommand, CALLBACK_COMMANDS, setupBotCommands } from '@commands';
 import { MessageService } from '@messages';
-import { AbstractClassService } from '@shared';
+import { AbstractClassService, getAdminId, getApiUrl, getToken } from '@shared';
 import { TransactionCategory } from '@google-sheets/interfaces';
 
 export class CommandService implements AbstractClassService<CommandService> {
@@ -24,14 +23,14 @@ export class CommandService implements AbstractClassService<CommandService> {
     const validationErrors = this.validateCommands(setupBotCommands);
     if (validationErrors.length > 0) {
       this.messageService.sendText(
-        Number(CONFIG.ADMIN_ID),
+        Number(getAdminId()),
         `❌ Ошибка установки команд: ${validationErrors.join('\n')}`,
       );
 
       return;
     }
 
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/setMyCommands`;
+    const url = `${getApiUrl()}${getToken()}/setMyCommands`;
 
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       method: 'post',
@@ -58,7 +57,7 @@ export class CommandService implements AbstractClassService<CommandService> {
   }
 
   public deleteBotCommands(): void {
-    const url = `${CONFIG.API_URL}${CONFIG.TOKEN}/deleteMyCommands`;
+    const url = `${getApiUrl()}${getToken()}/deleteMyCommands`;
 
     const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
       method: 'post',

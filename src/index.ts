@@ -7,6 +7,7 @@ import { WebhookService } from '@webhooks';
 import { GoogleSheetsService } from '@google-sheets';
 import { TextCommandsController, QueryCommandsController } from '@commands';
 import { Update } from '@telegram-api';
+import { setSecrets } from '@shared';
 
 // Инициализация сервисов
 const stateManager = StateManager.getInstance();
@@ -21,6 +22,7 @@ const queryCommandsController = QueryCommandsController.getInstance();
 
 // Глобальные функции для GAS
 function startBot() {
+  setSecrets();
   commandService.deleteBotCommands();
   webhookService.deleteWebhook();
   webhookService.setWebhook();

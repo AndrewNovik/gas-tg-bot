@@ -1,4 +1,3 @@
-import { CONFIG } from '@config';
 import { StateManager, STATE_STEPS } from '@state';
 import { MessageService } from '@messages';
 import { GoogleSheetsService } from '@google-sheets';
