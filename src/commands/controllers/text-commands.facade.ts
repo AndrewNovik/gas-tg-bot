@@ -66,6 +66,11 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
     this.messageService.sendText(chatId, `📝 Введи название категории:`);
   }
 
+  public mainCommandAddAccountStart(chatId: number): void {
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_ACCOUNT_NAME);
+    this.messageService.sendText(chatId, `📝 Введи название счета:`);
+  }
+
   public noSuchCommandFound(chatId: number, text: string): void {
     const trimmedText = text.trim();
     this.messageService.sendText(chatId, `❌ Неизвестная команда: "${trimmedText}"`);
@@ -137,12 +142,6 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_CONFIRM);
   }
 
-  /**
-   * Извлекает числовое значение из текста
-   * Поддерживает целые и дробные числа, заменяет запятые на точки
-   * @param text - исходный текст
-   * @returns число или null если число не найдено
-   */
   private extractNumberFromText(text: string): number | null {
     try {
       // Текст уже должен быть тримлен, но на всякий случай еще раз
@@ -210,6 +209,78 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
       chatId,
       `📝 Введи тип новой категории:`,
       addCategoryTypeInlienKeyboard,
+    );
+  }
+
+  public handleAddAccountName(chatId: number, text: string): void {
+    const cleanName = text.trim();
+
+    if (!cleanName) {
+      this.messageService.sendText(
+        chatId,
+        '❌ Название счета не может быть пустым. Попробуй еще раз.',
+      );
+      return;
+    }
+
+    if (cleanName.length > 50) {
+      this.messageService.sendText(
+        chatId,
+        '❌ Название счета слишком длинное. Максимум 50 символов.',
+      );
+      return;
+    }
+    this.stateManager.updateUserStateData(chatId, { accountName: cleanName });
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_ACCOUNT_CURRENCY);
+    this.messageService.sendText(chatId, `📝 Введи валюту счета:`);
+  }
+
+  public handleAddAccountCurrency(chatId: number, text: string): void {
+    const cleanCurrency = text.trim();
+
+    if (!cleanCurrency) {
+      this.messageService.sendText(chatId, '❌ Валюта не может быть пустой. Попробуй еще раз.');
+      return;
+    }
+
+    if (cleanCurrency.length > 3) {
+      this.messageService.sendText(chatId, '❌ Валюта слишком длинная. Максимум 3 символа.');
+      return;
+    }
+    this.stateManager.updateUserStateData(chatId, { accountCurrency: cleanCurrency });
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_ACCOUNT_AMOUNT);
+    this.messageService.sendText(chatId, `📝 Введи текущий баланс счета:`);
+  }
+
+  public handleAddAccountAmount(chatId: number, text: string): void {
+    const cleanAmount = text.trim();
+    const extractedAmount = this.extractNumberFromText(cleanAmount);
+
+    if (extractedAmount === null) {
+      this.messageService.sendText(
+        chatId,
+        '❌ Не удалось найти числовое значение. Попробуй еще раз, например: "100" или "50.50"',
+      );
+      return;
+    }
+
+    const amountString = extractedAmount.toString();
+    this.stateManager.updateUserStateData(chatId, { accountAmount: amountString });
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_ACCOUNT_CONFIRM);
+
+    const currentUserState = this.stateManager.getUserState(chatId);
+    const data = currentUserState?.data;
+
+    const { accountName, accountCurrency, accountAmount } = data as {
+      accountName: string;
+      accountCurrency: string;
+      accountAmount: string;
+    };
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      `✅ Проверь данные: \nНазвание: ${accountName} \nВалюта: ${accountCurrency} \nБаланс: ${accountAmount}`,
+      confirmInlineKeyboard,
     );
   }
 

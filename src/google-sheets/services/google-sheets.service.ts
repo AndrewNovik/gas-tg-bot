@@ -3,6 +3,7 @@ import { TransactionResult, CategoryResult, TransactionCategory } from '@google-
 import { AbstractClassService, getAdminId, getSpreadsheetId } from '@shared';
 import { TRANSACTION_TYPE } from '@commands/enums';
 import { GOOGLE_SHEETS_NAMES } from '@google-sheets/consts/google-sheets.consts';
+import { AccountResult } from '@google-sheets/interfaces/google-sheets.interface';
 
 export class GoogleSheetsService implements AbstractClassService<GoogleSheetsService> {
   private static instance: GoogleSheetsService;
@@ -139,6 +140,40 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     }
   }
 
+  public getNextAccountId(): number {
+    try {
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.ACCOUNTS);
+
+      if (!sheet) {
+        return 0;
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return 0; // Если таблица пустая, начинаем с 0
+      }
+
+      // Получаем все ID из первой колонки (начиная со 2-й строки)
+      const idColumn = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+      const ids = idColumn.map((row) => row[0]).filter((id) => id !== '' && id !== null);
+
+      if (ids.length === 0) {
+        return 0;
+      }
+
+      // Находим максимальный ID и инкрементируем
+      const maxId = Math.max(...ids);
+      return maxId + 1;
+    } catch (error) {
+      this.messageService.sendText(
+        Number(getAdminId()),
+        `❌ Ошибка при получении следующего ID счета: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return 0;
+    }
+  }
+
   public addCategory(name: string, type: TRANSACTION_TYPE, emoji: string): CategoryResult {
     try {
       const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTION_CATEGORIES);
@@ -146,7 +181,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       if (!sheet) {
         return {
           success: false,
-          error: 'Лист TransactionCategories не найден',
+          error: `Лист ${GOOGLE_SHEETS_NAMES.TRANSACTION_CATEGORIES} не найден`,
         };
       }
 
@@ -310,5 +345,90 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     }
 
     return sheet;
+  }
+
+  public isAccountExists(accountName: string): boolean {
+    try {
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.ACCOUNTS);
+
+      if (!sheet) {
+        return false;
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return false; // Если таблица пустая или только заголовки
+      }
+
+      // Получаем все данные начиная со 2-й строки (id, name, currency, currentBalance)
+      const data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+
+      // Проверяем существование счета с таким же именем
+      const existingAccount = data.find(
+        (row) => row[1].toLowerCase() === accountName.toLowerCase(),
+      );
+
+      return !!existingAccount;
+    } catch (error) {
+      this.messageService.sendText(
+        Number(getAdminId()),
+        `❌ Ошибка при проверке существования счета: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return false;
+    }
+  }
+
+  public addAccount(
+    accountName: string,
+    accountCurrency: string,
+    accountAmount: string,
+  ): AccountResult {
+    try {
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.ACCOUNTS);
+
+      if (!sheet) {
+        return {
+          success: false,
+          error: `Лист ${GOOGLE_SHEETS_NAMES.ACCOUNTS} не найден`,
+        };
+      }
+
+      // Проверяем существование счета с таким же именем
+      if (this.isAccountExists(accountName)) {
+        return {
+          success: false,
+          error: `Счет "${accountName}" уже существует`,
+        };
+      }
+
+      // Получаем следующий ID счета
+      const nextId = this.getNextAccountId();
+
+      // Находим первую свободную строку
+      const nextRow = sheet.getLastRow() + 1;
+
+      // Подготавливаем данные для записи в порядке: id, name, currency, currentBalance
+      const rowData: [number, string, string, string] = [
+        nextId, // ID
+        accountName, // Название счета
+        accountCurrency, // Валюта
+        accountAmount, // Текущий баланс
+      ];
+
+      // Записываем данные в строку
+      sheet.getRange(nextRow, 1, 1, rowData.length).setValues([rowData]);
+
+      return {
+        success: true,
+        row: nextRow,
+        data: rowData,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 }

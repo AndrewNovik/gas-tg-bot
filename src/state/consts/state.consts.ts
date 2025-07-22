@@ -3,6 +3,7 @@ export const CATEGOTY_TYPE = 'category_type';
 export const CANCEL = 'cancel';
 export const ADD_CATEGORY = 'add_category';
 export const ADD_TRANSACTION = 'add_transaction';
+export const ADD_ACCOUNT = 'add_account';
 export const DEFAULT_STEP = 'default';
 
 // PREFIXES

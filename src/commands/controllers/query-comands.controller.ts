@@ -114,6 +114,31 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
       }
     }
 
+    if (
+      state?.step === STATE_STEPS.ADD_ACCOUNT_CONFIRM &&
+      data &&
+      data.startsWith(`${CONFIRM_DESICION}${CALLBACK_PREFIX}`)
+    ) {
+      const action: CONFIRM_ACTION = data.replace(
+        `${CONFIRM_DESICION}${CALLBACK_PREFIX}`,
+        '',
+      ) as unknown as CONFIRM_ACTION;
+      switch (action) {
+        case CONFIRM_ACTION.CONFIRM:
+          this.queryCommandsFacade.handleConfirmAccount(chatId, state, firstName);
+          return;
+        case CONFIRM_ACTION.CANCEL:
+          this.queryCommandsFacade.handleCancelAccount(chatId);
+          return;
+        case CONFIRM_ACTION.EDIT:
+          this.queryCommandsFacade.handleEditAccount(chatId);
+          return;
+        default:
+          this.messageService.sendText(chatId, 'Неизвестный callback');
+          return;
+      }
+    }
+
     switch (data) {
       // Обработка создания типов категорий
       case CALLBACK_COMMANDS.INCOME:

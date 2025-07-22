@@ -20,7 +20,7 @@ export const startMenuReplyKeyboard: TelegramReplyKeyboardInterface = {
   keyboard: [
     [TEXT_COMMANDS.INCOME, TEXT_COMMANDS.EXPENSE],
     [TEXT_COMMANDS.TRANSFER],
-    [TEXT_COMMANDS.ADDCATEGORY, TEXT_COMMANDS.ADDTRANSACTION],
+    [TEXT_COMMANDS.ADDCATEGORY, TEXT_COMMANDS.ADDTRANSACTION, TEXT_COMMANDS.ADDACCOUNT],
     [TEXT_COMMANDS.SETTINGS],
   ],
   resize_keyboard: true, // автоматически подгоняет размер кнопок
@@ -78,6 +78,10 @@ export const setupBotCommands: BotCommand[] = [
   {
     command: SETUP_BOT_COMMANDS.ADDTRANSFER,
     description: '💸 Добавить перевод',
+  },
+  {
+    command: SETUP_BOT_COMMANDS.ADDACCOUNT,
+    description: '📝 Добавить новый счет',
   },
   {
     command: SETUP_BOT_COMMANDS.CANCEL,

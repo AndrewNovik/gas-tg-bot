@@ -12,6 +12,13 @@ export interface CategoryResult {
   error?: string;
 }
 
+export interface AccountResult {
+  success: boolean;
+  data?: [number, string, string, string];
+  row?: number;
+  error?: string;
+}
+
 export interface TransactionCategory {
   id: number;
   name: string;

@@ -1,21 +1,9 @@
 import { StateManager, STATE_STEPS } from '@state';
 import { MessageService } from '@messages';
 import { GoogleSheetsService } from '@google-sheets';
-import {
-  Message,
-  TelegramInlineKeyboardInterface,
-  TelegramReplyKeyboardInterface,
-} from '@telegram-api';
+import { Message } from '@telegram-api';
 import { AbstractClassService } from '@shared';
-import {
-  addTransactionReplyKeyboard,
-  startMenuReplyKeyboard,
-  USERS_ID,
-  MAIN_COMMANDS,
-  TEXT_COMMANDS,
-  TRANSACTION_TYPE,
-} from '@commands';
-import { TransactionCategory } from '@google-sheets/interfaces';
+import { USERS_ID, MAIN_COMMANDS, TEXT_COMMANDS, TRANSACTION_TYPE } from '@commands';
 import { TextCommandsFacade } from './text-commands.facade';
 
 export class TextCommandsController implements AbstractClassService<TextCommandsController> {
@@ -67,6 +55,11 @@ export class TextCommandsController implements AbstractClassService<TextCommands
       case MAIN_COMMANDS.ADDCATEGORY:
       case TEXT_COMMANDS.ADDCATEGORY:
         this.textCommandsFacade.mainCommandAddCategoryStart(chatId);
+        break;
+
+      case MAIN_COMMANDS.ADDACCOUNT:
+      case TEXT_COMMANDS.ADDACCOUNT:
+        this.textCommandsFacade.mainCommandAddAccountStart(chatId);
         break;
 
       case MAIN_COMMANDS.ADDINCOME:
@@ -150,6 +143,18 @@ export class TextCommandsController implements AbstractClassService<TextCommands
 
           case STATE_STEPS.ADD_CATEGORY_EMOJI:
             this.textCommandsFacade.handleAddCategoryEmoji(chatId, text);
+            break;
+
+          case STATE_STEPS.ADD_ACCOUNT_NAME:
+            this.textCommandsFacade.handleAddAccountName(chatId, text);
+            break;
+
+          case STATE_STEPS.ADD_ACCOUNT_CURRENCY:
+            this.textCommandsFacade.handleAddAccountCurrency(chatId, text);
+            break;
+
+          case STATE_STEPS.ADD_ACCOUNT_AMOUNT:
+            this.textCommandsFacade.handleAddAccountAmount(chatId, text);
             break;
 
           default:

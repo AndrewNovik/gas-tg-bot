@@ -262,4 +262,84 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
     this.stateManager.setUserState(chatId, STATE_STEPS.ADD_CATEGORY_NAME);
     this.messageService.sendText(chatId, '📝 Введи новое название категории:');
   }
+
+  public handleConfirmAccount(chatId: number, state: UserStateInterface, firstName: string): void {
+    try {
+      const data = state.data;
+
+      if (!data) {
+        this.messageService.sendText(chatId, TEXT_MESSAGES.ACCOUNT_NOT_ADDED);
+        this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+        this.messageService.sendReplyMarkup(
+          chatId,
+          TEXT_MESSAGES.RESET_USER_STATE,
+          startMenuReplyKeyboard,
+        );
+        return;
+      }
+
+      const { accountName, accountCurrency, accountAmount } = data as {
+        accountName: string;
+        accountCurrency: string;
+        accountAmount: string;
+      };
+
+      if (!accountName || !accountCurrency || !accountAmount) {
+        this.messageService.sendText(chatId, TEXT_MESSAGES.ACCOUNT_NOT_ADDED);
+        this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+        this.messageService.sendReplyMarkup(
+          chatId,
+          TEXT_MESSAGES.RESET_USER_STATE,
+          startMenuReplyKeyboard,
+        );
+      }
+
+      const result = this.googleSheetsService.addAccount(
+        accountName,
+        accountCurrency,
+        accountAmount,
+      );
+
+      if (result.success) {
+        USERS_ID.forEach((id) => {
+          this.messageService.sendText(
+            id,
+            `✅ ${firstName} add new account: ${accountName} ${accountCurrency} ${accountAmount}`,
+          );
+        });
+      } else {
+        this.messageService.sendText(chatId, `${TEXT_MESSAGES.ACCOUNT_NOT_ADDED}: ${result.error}`);
+      }
+    } catch (error) {
+      this.messageService.sendText(
+        chatId,
+        `${TEXT_MESSAGES.ACCOUNT_NOT_ADDED}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+      this.messageService.sendReplyMarkup(
+        chatId,
+        TEXT_MESSAGES.RESET_USER_STATE,
+        startMenuReplyKeyboard,
+      );
+    }
+    this.messageService.sendText(chatId, TEXT_MESSAGES.ACCOUNT_ADDED);
+    this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+    this.messageService.sendReplyMarkup(chatId, TEXT_MESSAGES.NEW_ACTION, startMenuReplyKeyboard);
+  }
+
+  public handleCancelAccount(chatId: number): void {
+    this.messageService.sendText(chatId, TEXT_MESSAGES.ACCOUNT_NOT_ADDED);
+    this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+    this.messageService.sendReplyMarkup(
+      chatId,
+      TEXT_MESSAGES.RESET_USER_STATE,
+      startMenuReplyKeyboard,
+    );
+  }
+
+  public handleEditAccount(chatId: number): void {
+    this.messageService.sendText(chatId, '✏️ Редактирование счета');
+    this.stateManager.setUserState(chatId, STATE_STEPS.ADD_ACCOUNT_NAME);
+    this.messageService.sendText(chatId, '📝 Введи новое название счета:');
+  }
 }
