@@ -18,8 +18,7 @@ export const CONFIRM_DESICION = 'confirm_desicion_';
 
 export const startMenuReplyKeyboard: TelegramReplyKeyboardInterface = {
   keyboard: [
-    [TEXT_COMMANDS.INCOME, TEXT_COMMANDS.EXPENSE],
-    [TEXT_COMMANDS.TRANSFER],
+    [TEXT_COMMANDS.INCOME, TEXT_COMMANDS.EXPENSE, TEXT_COMMANDS.TRANSFER],
     [TEXT_COMMANDS.ADDCATEGORY, TEXT_COMMANDS.ADDTRANSACTION, TEXT_COMMANDS.ADDACCOUNT],
     [TEXT_COMMANDS.SETTINGS],
   ],
@@ -38,17 +37,21 @@ export const confirmInlineKeyboard: TelegramInlineKeyboardInterface = {
     [
       {
         text: `✍️ ${CONFIRM_ACTION.EDIT}`,
-        callback_data: `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.EDIT}`,
+        callback_data: `${CALLBACK_COMMANDS.EDIT}`,
       },
       {
         text: `❌ ${CONFIRM_ACTION.CANCEL}`,
-        callback_data: `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.CANCEL}`,
+        callback_data: `${CALLBACK_COMMANDS.CANCEL}`,
+      },
+      {
+        text: `💬 ${CONFIRM_ACTION.ADD_COMMENT}`,
+        callback_data: `${CALLBACK_COMMANDS.ADD_COMMENT}`,
       },
     ],
     [
       {
         text: `✅ ${CONFIRM_ACTION.CONFIRM}`,
-        callback_data: `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.CONFIRM}`,
+        callback_data: `${CALLBACK_COMMANDS.CONFIRM}`,
       },
     ],
   ],
@@ -57,35 +60,35 @@ export const confirmInlineKeyboard: TelegramInlineKeyboardInterface = {
 export const setupBotCommands: BotCommand[] = [
   {
     command: SETUP_BOT_COMMANDS.START,
-    description: '👋 Начало работы с ботом',
+    description: '👋 Start working with bot',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDTRANSACTION,
-    description: '📝 Добавить новую транзакцию в таблицу',
+    description: '📝 Add new transaction',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDCATEGORY,
-    description: '📝 Добавить новую категорию транзакций',
+    description: '📝 Add new category',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDINCOME,
-    description: '💵 Добавить доход',
+    description: '💵 Add income',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDEXPENSE,
-    description: '💸 Добавить расход',
+    description: '💸 Add expense',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDTRANSFER,
-    description: '💸 Добавить перевод',
+    description: '💸 Add transfer',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDACCOUNT,
-    description: '📝 Добавить новый счет',
+    description: '📝 Add new account',
   },
   {
     command: SETUP_BOT_COMMANDS.CANCEL,
-    description: '❌ Отменить текущие действия',
+    description: '❌ Cancel current actions',
   },
 ];
 
@@ -93,15 +96,15 @@ export const addCategoryTypeInlienKeyboard: TelegramInlineKeyboardInterface = {
   inline_keyboard: [
     [
       {
-        text: `💵 Доход`,
+        text: `💵 Income`,
         callback_data: `${CALLBACK_COMMANDS.INCOME}`,
       },
       {
-        text: `💸 Расход`,
+        text: `💸 Expense`,
         callback_data: `${CALLBACK_COMMANDS.EXPENSE}`,
       },
       {
-        text: `💸 Перевод`,
+        text: `💸 Transfer`,
         callback_data: `${CALLBACK_COMMANDS.TRANSFER}`,
       },
     ],

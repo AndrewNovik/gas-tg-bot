@@ -137,12 +137,20 @@ export class TextCommandsController implements AbstractClassService<TextCommands
             this.textCommandsFacade.handleAddTransactionAmount(chatId, text);
             break;
 
+          case STATE_STEPS.ADD_TRANSACTION_COMMENT:
+            this.textCommandsFacade.handleAddTransactionComment(chatId, text);
+            break;
+
           case STATE_STEPS.ADD_CATEGORY_NAME:
             this.textCommandsFacade.handleAddCategoryName(chatId, text);
             break;
 
           case STATE_STEPS.ADD_CATEGORY_EMOJI:
             this.textCommandsFacade.handleAddCategoryEmoji(chatId, text);
+            break;
+
+          case STATE_STEPS.ADD_CATEGORY_COMMENT:
+            this.textCommandsFacade.handleAddCategoryComment(chatId, text);
             break;
 
           case STATE_STEPS.ADD_ACCOUNT_NAME:
@@ -155,6 +163,10 @@ export class TextCommandsController implements AbstractClassService<TextCommands
 
           case STATE_STEPS.ADD_ACCOUNT_AMOUNT:
             this.textCommandsFacade.handleAddAccountAmount(chatId, text);
+            break;
+
+          case STATE_STEPS.ADD_ACCOUNT_COMMENT:
+            this.textCommandsFacade.handleAddAccountComment(chatId, text);
             break;
 
           default:

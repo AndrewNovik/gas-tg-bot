@@ -50,7 +50,7 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
     } catch (error) {
       this.messageService.sendText(
         Number(getAdminId()),
-        `❌ Критическая ошибка answerCallbackQuery: ${error instanceof Error ? error.message : String(error)}`,
+        `${TEXT_MESSAGES.CRITICAL_ERROR}: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       return { ok: false, description: error instanceof Error ? error.message : String(error) };
@@ -75,7 +75,10 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
       // Переходим к следующему шагу (например, ввод суммы)
       this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_AMOUNT);
 
-      this.messageService.sendText(chatId, `Введи сумму:`);
+      this.messageService.sendText(
+        chatId,
+        `Input amount of ${category.type === TRANSACTION_TYPE.INCOME ? 'income' : 'expense'} in ${category.name}:`,
+      );
     } catch (error) {
       this.messageService.sendText(
         chatId,
@@ -109,18 +112,34 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
         transactionCategory: TransactionCategory;
       };
 
+      const transactionComment = data?.transactionComment || '';
+
+      if (!transactionType || !amount || !transactionCategory) {
+        this.messageService.sendText(chatId, TEXT_MESSAGES.TRANSACTION_NOT_ADDED);
+        this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+        this.messageService.sendReplyMarkup(
+          chatId,
+          TEXT_MESSAGES.RESET_USER_STATE,
+          startMenuReplyKeyboard,
+        );
+        return;
+      }
+
       // Добавляем транзакцию в Google Sheets
       const result = this.googleSheetsService.addTransaction(
         transactionType,
         amount,
         transactionCategory.name,
+        transactionComment,
+        String(chatId),
+        firstName,
       );
 
       if (result.success) {
         USERS_ID.forEach((id) => {
           this.messageService.sendText(
             id,
-            `✅ ${firstName} add ${transactionType} for ${amount} BYN in category: ${transactionCategory.name}`,
+            `✅ ${firstName} add ${transactionType} for ${amount} BYN in category: ${transactionCategory.name}\n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
           );
         });
       } else {
@@ -135,15 +154,19 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
     } catch (error) {
       this.messageService.sendText(
         chatId,
-        `❌ Произошла ошибка: ${error instanceof Error ? error.message : String(error)}`,
+        `${TEXT_MESSAGES.TRANSACTION_NOT_ADDED}: ${error instanceof Error ? error.message : String(error)}`,
       );
       this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
-      this.messageService.sendReplyMarkup(chatId, TEXT_MESSAGES.NEW_ACTION, startMenuReplyKeyboard);
+      this.messageService.sendReplyMarkup(
+        chatId,
+        TEXT_MESSAGES.RESET_USER_STATE,
+        startMenuReplyKeyboard,
+      );
     }
   }
 
   public handleCancelTransaction(chatId: number, state: UserStateInterface): void {
-    this.messageService.sendText(chatId, '❌ Транзакция отменена');
+    this.messageService.sendText(chatId, TEXT_MESSAGES.CANCEL_TRANSACTION);
     this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
     this.messageService.sendReplyMarkup(
       chatId,
@@ -153,7 +176,7 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
   }
 
   public handleEditTransaction(chatId: number, state: UserStateInterface): void {
-    this.messageService.sendText(chatId, '✏️ Редактирование транзакции');
+    this.messageService.sendText(chatId, TEXT_MESSAGES.EDIT_TRANSACTION);
     const data = state.data;
     const { transactionType, transactionCategory } = data as {
       transactionType: TRANSACTION_TYPE;
@@ -166,13 +189,18 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
       amount: '',
       transactionCategory,
     });
-    this.messageService.sendText(chatId, '📝 Введи новую сумму:');
+    this.messageService.sendText(chatId, '📝 Input new amount of transaction:');
+  }
+
+  public handleAddCommentToTransaction(chatId: number): void {
+    this.messageService.sendText(chatId, '📝 Input comment for transaction:');
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_COMMENT);
   }
 
   public handleAddinngNewCategoryType(chatId: number, categoryType: TRANSACTION_TYPE): void {
     this.stateManager.updateUserStateData(chatId, { categoryType });
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_CATEGORY_EMOJI);
-    this.messageService.sendText(chatId, `📝 Введи эмодзи для категории:`);
+    this.messageService.sendText(chatId, `📝 Input emoji for category:`);
   }
 
   public handleConfirmCategory(chatId: number, state: UserStateInterface, firstName: string): void {
@@ -196,6 +224,8 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
         categoryEmoji: string;
       };
 
+      const categoryComment = data?.categoryComment || '';
+
       // Проверяем наличие всех необходимых данных
       if (!categoryName || !categoryType || !categoryEmoji) {
         this.messageService.sendText(chatId, TEXT_MESSAGES.CATEGORY_NOT_ADDED);
@@ -213,13 +243,14 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
         categoryName,
         categoryType,
         categoryEmoji,
+        categoryComment,
       );
 
       if (result.success) {
         USERS_ID.forEach((id) => {
           this.messageService.sendText(
             id,
-            `✅ ${firstName} add new ${categoryType} category: ${categoryName} ${categoryEmoji}`,
+            `✅ ${firstName} add new ${categoryType} category: ${categoryName} ${categoryEmoji}\n${categoryComment.length > 0 ? `Comment: ${categoryComment}` : ''}`,
           );
         });
       } else {
@@ -256,11 +287,16 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
     );
   }
 
-  public handleEditCategory(chatId: number, state: UserStateInterface): void {
-    this.messageService.sendText(chatId, '✏️ Редактирование категории');
+  public handleEditCategory(chatId: number): void {
+    this.messageService.sendText(chatId, TEXT_MESSAGES.EDIT_CATEGORY);
     // Возвращаемся к шагу ввода названия для редактирования
     this.stateManager.setUserState(chatId, STATE_STEPS.ADD_CATEGORY_NAME);
-    this.messageService.sendText(chatId, '📝 Введи новое название категории:');
+    this.messageService.sendText(chatId, '📝 Input new name of category:');
+  }
+
+  public handleAddCommentToCategory(chatId: number): void {
+    this.messageService.sendText(chatId, '📝 Input comment for category:');
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_CATEGORY_COMMENT);
   }
 
   public handleConfirmAccount(chatId: number, state: UserStateInterface, firstName: string): void {
@@ -284,6 +320,8 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
         accountAmount: string;
       };
 
+      const accountComment = data?.accountComment || '';
+
       if (!accountName || !accountCurrency || !accountAmount) {
         this.messageService.sendText(chatId, TEXT_MESSAGES.ACCOUNT_NOT_ADDED);
         this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
@@ -298,13 +336,14 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
         accountName,
         accountCurrency,
         accountAmount,
+        accountComment,
       );
 
       if (result.success) {
         USERS_ID.forEach((id) => {
           this.messageService.sendText(
             id,
-            `✅ ${firstName} add new account: ${accountName} ${accountCurrency} ${accountAmount}`,
+            `✅ ${firstName} add new account: ${accountName} ${accountCurrency} ${accountAmount}\n${accountComment.length > 0 ? `Comment: ${accountComment}` : ''}`,
           );
         });
       } else {
@@ -330,6 +369,7 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
   public handleCancelAccount(chatId: number): void {
     this.messageService.sendText(chatId, TEXT_MESSAGES.ACCOUNT_NOT_ADDED);
     this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+    this.messageService.sendText(chatId, TEXT_MESSAGES.CANCEL_ACCOUNT);
     this.messageService.sendReplyMarkup(
       chatId,
       TEXT_MESSAGES.RESET_USER_STATE,
@@ -338,8 +378,13 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
   }
 
   public handleEditAccount(chatId: number): void {
-    this.messageService.sendText(chatId, '✏️ Редактирование счета');
+    this.messageService.sendText(chatId, TEXT_MESSAGES.EDIT_ACCOUNT);
     this.stateManager.setUserState(chatId, STATE_STEPS.ADD_ACCOUNT_NAME);
-    this.messageService.sendText(chatId, '📝 Введи новое название счета:');
+    this.messageService.sendText(chatId, '📝 Input new name of account:');
+  }
+
+  public handleAddCommentToAccount(chatId: number): void {
+    this.messageService.sendText(chatId, '📝 Input comment for account:');
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_ACCOUNT_COMMENT);
   }
 }

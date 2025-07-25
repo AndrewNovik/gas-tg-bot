@@ -10,6 +10,7 @@ import {
   CONFIRM_DESICION,
   CALLBACK_PREFIX,
   CONFIRM_ACTION,
+  TEXT_MESSAGES,
 } from '@commands';
 import { QueryCommandsFacade } from './query-commands.facade';
 
@@ -49,6 +50,11 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
     const data = query.data;
     const firstName = query.from.first_name;
 
+    if (!data) {
+      this.messageService.sendText(chatId, TEXT_MESSAGES.UNKNOWN_CALLBACK);
+      return;
+    }
+
     // Ответ на callback - ОБЯЗАТЕЛЬНО в течение 10 секунд
     this.queryCommandsFacade.answerCallbackQuery(query.id);
 
@@ -56,7 +62,6 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
 
     // Проверяем, начинается ли callback с ключа выбора категории транзакции
     if (
-      data &&
       data.startsWith(CALLBACK_COMMANDS.CHOOSE_TRANSACTION_CATEGORY) &&
       state?.step === STATE_STEPS.ADD_TRANSACTION_CATEGORY_TYPE
     ) {
@@ -65,77 +70,61 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
       return;
     }
 
-    if (
-      state?.step === STATE_STEPS.ADD_TRANSACTION_CONFIRM &&
-      data &&
-      data.startsWith(`${CONFIRM_DESICION}${CALLBACK_PREFIX}`)
-    ) {
+    // Обработка колбеков для подтверждения или отмены действий
+    if (data.startsWith(CONFIRM_DESICION + CALLBACK_PREFIX)) {
       const action: CONFIRM_ACTION = data.replace(
-        `${CONFIRM_DESICION}${CALLBACK_PREFIX}`,
+        CONFIRM_DESICION + CALLBACK_PREFIX,
         '',
       ) as unknown as CONFIRM_ACTION;
-      switch (action) {
-        case CONFIRM_ACTION.CONFIRM:
-          this.queryCommandsFacade.handleConfirmTransaction(chatId, state, firstName);
-          return;
-        case CONFIRM_ACTION.CANCEL:
-          this.queryCommandsFacade.handleCancelTransaction(chatId, state);
-          return;
-        case CONFIRM_ACTION.EDIT:
-          this.queryCommandsFacade.handleEditTransaction(chatId, state);
-          return;
-        default:
-          this.messageService.sendText(chatId, 'Неизвестный callback');
-          return;
-      }
-    }
-
-    if (
-      state?.step === STATE_STEPS.ADD_CATEGORY_CONFIRM &&
-      data &&
-      data.startsWith(`${CONFIRM_DESICION}${CALLBACK_PREFIX}`)
-    ) {
-      const action: CONFIRM_ACTION = data.replace(
-        `${CONFIRM_DESICION}${CALLBACK_PREFIX}`,
-        '',
-      ) as unknown as CONFIRM_ACTION;
-      switch (action) {
-        case CONFIRM_ACTION.CONFIRM:
-          this.queryCommandsFacade.handleConfirmCategory(chatId, state, firstName);
-          return;
-        case CONFIRM_ACTION.CANCEL:
-          this.queryCommandsFacade.handleCancelCategory(chatId);
-          return;
-        case CONFIRM_ACTION.EDIT:
-          this.queryCommandsFacade.handleEditCategory(chatId, state);
-          return;
-        default:
-          this.messageService.sendText(chatId, 'Неизвестный callback');
-      }
-    }
-
-    if (
-      state?.step === STATE_STEPS.ADD_ACCOUNT_CONFIRM &&
-      data &&
-      data.startsWith(`${CONFIRM_DESICION}${CALLBACK_PREFIX}`)
-    ) {
-      const action: CONFIRM_ACTION = data.replace(
-        `${CONFIRM_DESICION}${CALLBACK_PREFIX}`,
-        '',
-      ) as unknown as CONFIRM_ACTION;
-      switch (action) {
-        case CONFIRM_ACTION.CONFIRM:
-          this.queryCommandsFacade.handleConfirmAccount(chatId, state, firstName);
-          return;
-        case CONFIRM_ACTION.CANCEL:
-          this.queryCommandsFacade.handleCancelAccount(chatId);
-          return;
-        case CONFIRM_ACTION.EDIT:
-          this.queryCommandsFacade.handleEditAccount(chatId);
-          return;
-        default:
-          this.messageService.sendText(chatId, 'Неизвестный callback');
-          return;
+      // Определяем степ, в котором находится пользователь
+      switch (state?.step) {
+        case STATE_STEPS.ADD_TRANSACTION_CONFIRM:
+          // Определяем действие, которое выполнил пользователь в степе транзакции
+          switch (action) {
+            case CONFIRM_ACTION.CONFIRM:
+              this.queryCommandsFacade.handleConfirmTransaction(chatId, state, firstName);
+              return;
+            case CONFIRM_ACTION.CANCEL:
+              this.queryCommandsFacade.handleCancelTransaction(chatId, state);
+              return;
+            case CONFIRM_ACTION.EDIT:
+              this.queryCommandsFacade.handleEditTransaction(chatId, state);
+              return;
+            case CONFIRM_ACTION.ADD_COMMENT:
+              this.queryCommandsFacade.handleAddCommentToTransaction(chatId);
+              return;
+          }
+        case STATE_STEPS.ADD_CATEGORY_CONFIRM:
+          // Определяем действие, которое выполнил пользователь в степе категории
+          switch (action) {
+            case CONFIRM_ACTION.CONFIRM:
+              this.queryCommandsFacade.handleConfirmCategory(chatId, state, firstName);
+              return;
+            case CONFIRM_ACTION.CANCEL:
+              this.queryCommandsFacade.handleCancelCategory(chatId);
+              return;
+            case CONFIRM_ACTION.EDIT:
+              this.queryCommandsFacade.handleEditCategory(chatId);
+              return;
+            case CONFIRM_ACTION.ADD_COMMENT:
+              this.queryCommandsFacade.handleAddCommentToCategory(chatId);
+              return;
+          }
+        case STATE_STEPS.ADD_ACCOUNT_CONFIRM:
+          switch (action) {
+            case CONFIRM_ACTION.CONFIRM:
+              this.queryCommandsFacade.handleConfirmAccount(chatId, state, firstName);
+              return;
+            case CONFIRM_ACTION.CANCEL:
+              this.queryCommandsFacade.handleCancelAccount(chatId);
+              return;
+            case CONFIRM_ACTION.EDIT:
+              this.queryCommandsFacade.handleEditAccount(chatId);
+              return;
+            case CONFIRM_ACTION.ADD_COMMENT:
+              this.queryCommandsFacade.handleAddCommentToAccount(chatId);
+              return;
+          }
       }
     }
 
@@ -152,7 +141,7 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
         return;
 
       default:
-        this.messageService.sendText(chatId, 'Неизвестный callback');
+        this.messageService.sendText(chatId, TEXT_MESSAGES.UNKNOWN_CALLBACK);
     }
   }
 }

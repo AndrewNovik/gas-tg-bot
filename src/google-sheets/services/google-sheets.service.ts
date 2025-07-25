@@ -58,6 +58,9 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     transactionType: string,
     amount: string,
     transactionCategory: string,
+    transactionComment: string,
+    chatId: string,
+    firstName: string,
   ): TransactionResult {
     try {
       const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTIONS);
@@ -81,13 +84,16 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       const nextRow = sheet.getLastRow() + 1;
 
       // Подготавливаем данные для записи в порядке: id, transactionType, amount, transactionCategory, date, time
-      const rowData: [number, string, string, string, string, string] = [
+      const rowData: [number, string, string, string, string, string, string, string, string] = [
         nextId, // ID
         transactionType, // Тип транзакции
         amount, // Сумма
         transactionCategory, // Категория
         date, // Дата
         time, // Время
+        transactionComment, // Комментарий
+        chatId, // ID чата
+        firstName, // Имя пользователя
       ];
 
       // Записываем данные в строку
@@ -174,7 +180,12 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     }
   }
 
-  public addCategory(name: string, type: TRANSACTION_TYPE, emoji: string): CategoryResult {
+  public addCategory(
+    name: string,
+    type: TRANSACTION_TYPE,
+    emoji: string,
+    comment: string,
+  ): CategoryResult {
     try {
       const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTION_CATEGORIES);
 
@@ -200,11 +211,12 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       const nextRow = sheet.getLastRow() + 1;
 
       // Подготавливаем данные для записи в порядке: id, name, type, emoji
-      const rowData: [number, string, string, string] = [
+      const rowData: [number, string, string, string, string] = [
         nextId, // ID
         name, // Название
         type, // Тип (income/expense/transfer)
         emoji, // Эмодзи
+        comment, // Комментарий
       ];
 
       // Записываем данные в строку
@@ -383,6 +395,7 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     accountName: string,
     accountCurrency: string,
     accountAmount: string,
+    comment: string,
   ): AccountResult {
     try {
       const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.ACCOUNTS);
@@ -409,11 +422,12 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       const nextRow = sheet.getLastRow() + 1;
 
       // Подготавливаем данные для записи в порядке: id, name, currency, currentBalance
-      const rowData: [number, string, string, string] = [
+      const rowData: [number, string, string, string, string] = [
         nextId, // ID
         accountName, // Название счета
         accountCurrency, // Валюта
         accountAmount, // Текущий баланс
+        comment, // Комментарий
       ];
 
       // Записываем данные в строку

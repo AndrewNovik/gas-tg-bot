@@ -115,7 +115,7 @@ export class CommandService implements AbstractClassService<CommandService> {
     categories: TransactionCategory[],
   ): Array<Array<{ text: string; callback_data: string }>> {
     const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
-    const itemsPerRow = 2; // 2 кнопки в ряду
+    const itemsPerRow = 3; // 3 кнопки в ряду
 
     for (let i = 0; i < categories.length; i += itemsPerRow) {
       const row: Array<{ text: string; callback_data: string }> = [];

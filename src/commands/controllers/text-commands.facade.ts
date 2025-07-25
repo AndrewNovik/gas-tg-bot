@@ -10,7 +10,7 @@ import { TransactionCategory } from '@google-sheets/interfaces';
 import { GoogleSheetsService } from '@google-sheets/services';
 import { MessageService } from '@messages/services/message.service';
 import { AbstractClassService } from '@shared/abstract-class.service';
-import { STATE_STEPS, StateManager } from '@state';
+import { STATE_STEPS, StateManager, UserStateInterface } from '@state';
 import { TelegramInlineKeyboardInterface } from '@telegram-api';
 
 export class TextCommandsFacade implements AbstractClassService<TextCommandsFacade> {
@@ -53,7 +53,7 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
   }
 
   public mainCommandAddTransactionStart(chatId: number, firstName: string): void {
-    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_TYPE);
+    this.stateManager.setUserState(chatId, STATE_STEPS.ADD_TRANSACTION_TYPE);
     this.messageService.sendReplyMarkup(
       chatId,
       `☝️ ${firstName}! Выбери тип транзакции:`,
@@ -62,12 +62,12 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
   }
 
   public mainCommandAddCategoryStart(chatId: number): void {
-    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_CATEGORY_NAME);
+    this.stateManager.setUserState(chatId, STATE_STEPS.ADD_CATEGORY_NAME);
     this.messageService.sendText(chatId, `📝 Введи название категории:`);
   }
 
   public mainCommandAddAccountStart(chatId: number): void {
-    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_ACCOUNT_NAME);
+    this.stateManager.setUserState(chatId, STATE_STEPS.ADD_ACCOUNT_NAME);
     this.messageService.sendText(chatId, `📝 Введи название счета:`);
   }
 
@@ -134,12 +134,34 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
       transactionCategory: TransactionCategory;
     };
 
+    const transactionComment = data?.transactionComment || '';
+
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Проверь данные: \nТип транзакции: ${transactionType} \nСумма: ${amount} \nКатегория: ${transactionCategory.name}`,
+      `✅ Check data: \nTransaction type: ${transactionType} \nAmount: ${amount} \nCategory: ${transactionCategory.name} \n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
       confirmInlineKeyboard,
     );
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_CONFIRM);
+  }
+
+  public handleAddTransactionComment(chatId: number, text: string): void {
+    const trimmedText = text.trim();
+    this.stateManager.updateUserStateData(chatId, { transactionComment: trimmedText ?? '' });
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_CONFIRM);
+
+    const data = this.stateManager.getUserState(chatId)?.data;
+    const { transactionType, amount, transactionCategory, transactionComment } = data as {
+      transactionType: TRANSACTION_TYPE;
+      amount: string;
+      transactionCategory: TransactionCategory;
+      transactionComment: string;
+    };
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      `✅ Check data: \nTransaction type: ${transactionType} \nAmount: ${amount} \nCategory: ${transactionCategory.name} \n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
+      confirmInlineKeyboard,
+    );
   }
 
   private extractNumberFromText(text: string): number | null {
@@ -271,15 +293,36 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
     const currentUserState = this.stateManager.getUserState(chatId);
     const data = currentUserState?.data;
 
-    const { accountName, accountCurrency, accountAmount } = data as {
+    const { accountName, accountCurrency, accountAmount, accountComment } = data as {
       accountName: string;
       accountCurrency: string;
       accountAmount: string;
+      accountComment: string;
     };
 
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Проверь данные: \nНазвание: ${accountName} \nВалюта: ${accountCurrency} \nБаланс: ${accountAmount}`,
+      `✅ Check data: \nName: ${accountName} \nCurrency: ${accountCurrency} \nBalance: ${accountAmount} \n${accountComment.length > 0 ? `Comment: ${accountComment}` : ''}`,
+      confirmInlineKeyboard,
+    );
+  }
+
+  public handleAddAccountComment(chatId: number, text: string): void {
+    const trimmedText = text.trim();
+    this.stateManager.updateUserStateData(chatId, { accountComment: trimmedText ?? '' });
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_ACCOUNT_CONFIRM);
+
+    const data = this.stateManager.getUserState(chatId)?.data;
+    const { accountName, accountCurrency, accountAmount, accountComment } = data as {
+      accountName: string;
+      accountCurrency: string;
+      accountAmount: string;
+      accountComment: string;
+    };
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      `✅ Check data: \nName: ${accountName} \nCurrency: ${accountCurrency} \nBalance: ${accountAmount} \n${accountComment.length > 0 ? `Comment: ${accountComment}` : ''}`,
       confirmInlineKeyboard,
     );
   }
@@ -308,9 +351,32 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
       categoryEmoji: string;
     };
 
+    const categoryComment = data?.categoryComment || '';
+
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Проверь данные: \nНазвание: ${categoryName} \nТип: ${categoryType} \nЭмодзи: ${categoryEmoji}`,
+      `✅ Check data: \nName: ${categoryName} \nType: ${categoryType} \nEmoji: ${categoryEmoji} \n${categoryComment.length > 0 ? `Comment: ${categoryComment}` : ''}`,
+      confirmInlineKeyboard,
+    );
+  }
+
+  public handleAddCategoryComment(chatId: number, text: string): void {
+    const trimmedText = text.trim();
+    this.stateManager.updateUserStateData(chatId, { categoryComment: trimmedText ?? '' });
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_CATEGORY_CONFIRM);
+
+    const data = this.stateManager.getUserState(chatId)?.data;
+
+    const { categoryName, categoryType, categoryEmoji, categoryComment } = data as {
+      categoryName: string;
+      categoryType: TRANSACTION_TYPE;
+      categoryEmoji: string;
+      categoryComment: string;
+    };
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      `✅ Check data: \nName: ${categoryName} \nType: ${categoryType} \nEmoji: ${categoryEmoji} \n${categoryComment.length > 0 ? `Comment: ${categoryComment}` : ''}`,
       confirmInlineKeyboard,
     );
   }
