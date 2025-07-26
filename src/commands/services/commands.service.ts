@@ -1,7 +1,7 @@
 import { BotCommand, CALLBACK_COMMANDS, setupBotCommands } from '@commands';
 import { MessageService } from '@messages';
 import { AbstractClassService, getAdminId, getApiUrl, getToken } from '@shared';
-import { TransactionCategory } from '@google-sheets/interfaces';
+import { TransactionCategory, TransactionAccount } from '@google-sheets/interfaces';
 
 export class CommandService implements AbstractClassService<CommandService> {
   private static instance: CommandService;
@@ -125,6 +125,29 @@ export class CommandService implements AbstractClassService<CommandService> {
         row.push({
           text: `${category.emoji} ${category.name}`,
           callback_data: `${CALLBACK_COMMANDS.CHOOSE_TRANSACTION_CATEGORY}${category.id}`,
+        });
+      }
+
+      keyboard.push(row);
+    }
+
+    return keyboard;
+  }
+
+  public createAccountInlineKeyboard(
+    accounts: TransactionAccount[],
+  ): Array<Array<{ text: string; callback_data: string }>> {
+    const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
+    const itemsPerRow = 2; // 2 кнопки в ряду для счетов
+
+    for (let i = 0; i < accounts.length; i += itemsPerRow) {
+      const row: Array<{ text: string; callback_data: string }> = [];
+
+      for (let j = 0; j < itemsPerRow && i + j < accounts.length; j++) {
+        const account = accounts[i + j];
+        row.push({
+          text: `💳 ${account.name} (${account.currency})`,
+          callback_data: `${CALLBACK_COMMANDS.CHOOSE_TRANSACTION_ACCOUNT}${account.id}`,
         });
       }
 

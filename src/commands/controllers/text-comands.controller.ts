@@ -64,7 +64,7 @@ export class TextCommandsController implements AbstractClassService<TextCommands
 
       case MAIN_COMMANDS.ADDINCOME:
       case TEXT_COMMANDS.INCOME:
-        this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
+        this.textCommandsFacade.mainCommandAddTransactionChooseAccount(
           chatId,
           TRANSACTION_TYPE.INCOME,
         );
@@ -72,7 +72,7 @@ export class TextCommandsController implements AbstractClassService<TextCommands
 
       case MAIN_COMMANDS.ADDEXPENSE:
       case TEXT_COMMANDS.EXPENSE:
-        this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
+        this.textCommandsFacade.mainCommandAddTransactionChooseAccount(
           chatId,
           TRANSACTION_TYPE.EXPENSE,
         );
@@ -80,7 +80,7 @@ export class TextCommandsController implements AbstractClassService<TextCommands
 
       case MAIN_COMMANDS.ADDTRANSFER:
       case TEXT_COMMANDS.TRANSFER:
-        this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
+        this.textCommandsFacade.mainCommandAddTransactionChooseAccount(
           chatId,
           TRANSACTION_TYPE.TRANSFER,
         );
@@ -100,19 +100,19 @@ export class TextCommandsController implements AbstractClassService<TextCommands
           case STATE_STEPS.ADD_TRANSACTION_TYPE:
             switch (text) {
               case TEXT_COMMANDS.INCOME:
-                this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
+                this.textCommandsFacade.mainCommandAddTransactionChooseAccount(
                   chatId,
                   TRANSACTION_TYPE.INCOME,
                 );
                 break;
               case TEXT_COMMANDS.EXPENSE:
-                this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
+                this.textCommandsFacade.mainCommandAddTransactionChooseAccount(
                   chatId,
                   TRANSACTION_TYPE.EXPENSE,
                 );
                 break;
               case TEXT_COMMANDS.TRANSFER:
-                this.textCommandsFacade.mainCommandAddTransactionChooseCategory(
+                this.textCommandsFacade.mainCommandAddTransactionChooseAccount(
                   chatId,
                   TRANSACTION_TYPE.TRANSFER,
                 );

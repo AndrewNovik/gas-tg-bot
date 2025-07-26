@@ -1,5 +1,6 @@
 import {
   CHOOSE_CATEGORY,
+  CHOOSE_ACCOUNT,
   CALLBACK_PREFIX,
   ID_PREFIX,
   CHOOSE_TRANSACTION_TYPE,
@@ -63,6 +64,7 @@ export enum TEXT_MESSAGES {
   UNKNOWN_COMMAND = '❌ Unknown command',
   CRITICAL_ERROR = '❌ Critical error',
   COMMENT_ADDED = '✅ comment added',
+  CHOOSE_ACCOUNT_FOR_TRANSACTION = '💳 Выберите счет для транзакции',
   // CATEGORIES
   // CATEGORY SUCCESS
   CATEGORY_ADDED = '✅ category added',
@@ -103,6 +105,7 @@ export enum CALLBACK_COMMANDS {
 
   // Выбор категории для транзакции через id
   CHOOSE_TRANSACTION_CATEGORY = `${CHOOSE_CATEGORY}${CALLBACK_PREFIX}${ID_PREFIX}`,
+  CHOOSE_TRANSACTION_ACCOUNT = `${CHOOSE_ACCOUNT}${CALLBACK_PREFIX}${ID_PREFIX}`,
 
   // Колбеки для подтверждения или отмены действий
   CONFIRM = `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.CONFIRM}`,

@@ -2,21 +2,25 @@ import { AbstractClassService } from '@shared/abstract-class.service';
 import { StateManager, UserStateInterface, STATE_STEPS } from '@state';
 import { MessageService } from '@messages/services/message.service';
 import { GoogleSheetsService } from '@google-sheets/services';
-import { TEXT_MESSAGES, TRANSACTION_TYPE } from '@commands/enums';
+import { TEXT_MESSAGES, TRANSACTION_TYPE, CALLBACK_COMMANDS } from '@commands/enums';
 import { TransactionCategory } from '@google-sheets/interfaces';
 import { startMenuReplyKeyboard, USERS_ID } from '@commands/consts';
+import { CommandService } from '@commands/services';
 import { getAdminId, getApiUrl, getToken } from '@shared';
+import { TransactionAccount } from '@google-sheets/interfaces/google-sheets.interface';
 
 export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFacade> {
   private static instance: QueryCommandsFacade;
   private readonly stateManager: StateManager;
   private readonly messageService: MessageService;
   private readonly googleSheetsService: GoogleSheetsService;
+  private readonly commandService: CommandService;
 
   private constructor() {
     this.stateManager = StateManager.getInstance();
     this.messageService = MessageService.getInstance();
     this.googleSheetsService = GoogleSheetsService.getInstance();
+    this.commandService = CommandService.getInstance();
   }
 
   public static getInstance(): QueryCommandsFacade {
@@ -87,6 +91,53 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
     }
   }
 
+  public handleChooseTransactionAccount(chatId: number, accountId: string): void {
+    const account = this.googleSheetsService.getAccountById(accountId);
+    if (!account) {
+      this.messageService.sendText(chatId, TEXT_MESSAGES.ACCOUNT_NOT_FOUND);
+      return;
+    }
+
+    // Обновляем состояние пользователя с выбранным счетом
+    this.stateManager.updateUserStateData(chatId, {
+      transactionAccount: account,
+    });
+
+    // Получаем тип транзакции из состояния пользователя
+    const currentState = this.stateManager.getUserState(chatId);
+    const transactionType = currentState?.data?.transactionType as TRANSACTION_TYPE;
+
+    if (!transactionType) {
+      this.messageService.sendText(chatId, TEXT_MESSAGES.TRANSACTION_NOT_ADDED);
+      this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+      return;
+    }
+
+    // Получаем категории по типу транзакции
+    const categories = this.googleSheetsService.getCategoriesByType(transactionType);
+
+    if (categories.length === 0) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Категории для типа "${transactionType}" не найдены. Сначала добавьте категории через /addcategory`,
+      );
+      this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+      return;
+    }
+
+    // Создаем клавиатуру с категориями (3 элемента в ряду)
+    const keyboard = {
+      inline_keyboard: this.commandService.createCategoryInlineKeyboard(categories),
+    };
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      `☝️ Выбери категорию для ${account.name}:`,
+      keyboard,
+    );
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_CATEGORY_TYPE);
+  }
+
   public handleConfirmTransaction(
     chatId: number,
     state: UserStateInterface,
@@ -106,15 +157,16 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
         return;
       }
 
-      const { transactionType, amount, transactionCategory } = data as {
+      const { transactionType, amount, transactionCategory, transactionAccount } = data as {
         transactionType: TRANSACTION_TYPE;
         amount: string;
         transactionCategory: TransactionCategory;
+        transactionAccount: TransactionAccount;
       };
 
       const transactionComment = data?.transactionComment || '';
 
-      if (!transactionType || !amount || !transactionCategory) {
+      if (!transactionType || !amount || !transactionCategory || !transactionAccount) {
         this.messageService.sendText(chatId, TEXT_MESSAGES.TRANSACTION_NOT_ADDED);
         this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
         this.messageService.sendReplyMarkup(
@@ -133,13 +185,15 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
         transactionComment,
         String(chatId),
         firstName,
+        transactionAccount.name,
+        String(transactionAccount.id),
       );
 
       if (result.success) {
         USERS_ID.forEach((id) => {
           this.messageService.sendText(
             id,
-            `✅ ${firstName} add ${transactionType} for ${amount} BYN in category: ${transactionCategory.name}\n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
+            `✅ ${firstName} add ${transactionType} for ${amount} BYN in category: ${transactionCategory.name} (Account: ${transactionAccount.name})\n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
           );
         });
       } else {

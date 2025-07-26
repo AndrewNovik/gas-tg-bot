@@ -6,7 +6,7 @@ import {
 } from '@commands/consts';
 import { TEXT_MESSAGES, TRANSACTION_TYPE } from '@commands';
 import { CommandService } from '@commands/services';
-import { TransactionCategory } from '@google-sheets/interfaces';
+import { TransactionAccount, TransactionCategory } from '@google-sheets/interfaces';
 import { GoogleSheetsService } from '@google-sheets/services';
 import { MessageService } from '@messages/services/message.service';
 import { AbstractClassService } from '@shared/abstract-class.service';
@@ -82,26 +82,30 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
     );
   }
 
-  public mainCommandAddTransactionChooseCategory(chatId: number, type: TRANSACTION_TYPE): void {
-    // Получаем категории по типу
-    const categories: TransactionCategory[] = this.googleSheetsService.getCategoriesByType(type);
+  public mainCommandAddTransactionChooseAccount(chatId: number, type: TRANSACTION_TYPE): void {
+    // Получаем все счета
+    const accounts = this.googleSheetsService.getAllAccounts();
 
-    if (categories.length === 0) {
+    if (accounts.length === 0) {
       this.messageService.sendText(
         chatId,
-        `❌ Категории для типа "${type}" не найдены. Сначала добавьте категории через /addcategory`,
+        `❌ Счета не найдены. Сначала добавьте счета через /addaccount`,
       );
       this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
       return;
     }
 
-    // Создаем клавиатуру с категориями
+    // Создаем клавиатуру со счетами
     const keyboard: TelegramInlineKeyboardInterface = {
-      inline_keyboard: this.commandService.createCategoryInlineKeyboard(categories),
+      inline_keyboard: this.commandService.createAccountInlineKeyboard(accounts),
     };
 
-    this.messageService.sendInlineKeyboard(chatId, `☝️ Выбери категорию`, keyboard);
-    this.stateManager.setUserState(chatId, STATE_STEPS.ADD_TRANSACTION_CATEGORY_TYPE, {
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      TEXT_MESSAGES.CHOOSE_ACCOUNT_FOR_TRANSACTION,
+      keyboard,
+    );
+    this.stateManager.setUserState(chatId, STATE_STEPS.ADD_TRANSACTION_ACCOUNT_TYPE, {
       transactionType: type,
     });
   }
@@ -128,17 +132,18 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
     const currentUserState = this.stateManager.getUserState(chatId);
     const data = currentUserState?.data;
 
-    const { transactionType, amount, transactionCategory } = data as {
+    const { transactionType, amount, transactionCategory, transactionAccount } = data as {
       transactionType: TRANSACTION_TYPE;
       amount: string;
       transactionCategory: TransactionCategory;
+      transactionAccount: TransactionAccount;
     };
 
     const transactionComment = data?.transactionComment || '';
 
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Check data: \nTransaction type: ${transactionType} \nAmount: ${amount} \nCategory: ${transactionCategory.name} \n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
+      `✅ Check data: \nTransaction type: ${transactionType} \nAmount: ${amount} \nCategory: ${transactionCategory.name} \nAccount: ${transactionAccount?.name || 'Unknown'} \n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
       confirmInlineKeyboard,
     );
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_CONFIRM);
@@ -150,16 +155,18 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_CONFIRM);
 
     const data = this.stateManager.getUserState(chatId)?.data;
-    const { transactionType, amount, transactionCategory, transactionComment } = data as {
-      transactionType: TRANSACTION_TYPE;
-      amount: string;
-      transactionCategory: TransactionCategory;
-      transactionComment: string;
-    };
+    const { transactionType, amount, transactionCategory, transactionComment, transactionAccount } =
+      data as {
+        transactionType: TRANSACTION_TYPE;
+        amount: string;
+        transactionCategory: TransactionCategory;
+        transactionComment: string;
+        transactionAccount: TransactionAccount;
+      };
 
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Check data: \nTransaction type: ${transactionType} \nAmount: ${amount} \nCategory: ${transactionCategory.name} \n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
+      `✅ Check data: \nTransaction type: ${transactionType} \nAmount: ${amount} \nCategory: ${transactionCategory.name} \nAccount: ${transactionAccount?.name || 'Unknown'} \n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
       confirmInlineKeyboard,
     );
   }
@@ -293,12 +300,13 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
     const currentUserState = this.stateManager.getUserState(chatId);
     const data = currentUserState?.data;
 
-    const { accountName, accountCurrency, accountAmount, accountComment } = data as {
+    const { accountName, accountCurrency, accountAmount } = data as {
       accountName: string;
       accountCurrency: string;
       accountAmount: string;
-      accountComment: string;
     };
+
+    const accountComment = data?.accountComment || '';
 
     this.messageService.sendInlineKeyboard(
       chatId,

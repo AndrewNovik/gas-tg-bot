@@ -1,9 +1,14 @@
 import { MessageService } from '@messages';
-import { TransactionResult, CategoryResult, TransactionCategory } from '@google-sheets/interfaces';
+import {
+  TransactionResult,
+  CategoryResult,
+  TransactionCategory,
+  TransactionAccount,
+  AccountResult,
+} from '@google-sheets/interfaces';
 import { AbstractClassService, getAdminId, getSpreadsheetId } from '@shared';
 import { TRANSACTION_TYPE } from '@commands/enums';
 import { GOOGLE_SHEETS_NAMES } from '@google-sheets/consts/google-sheets.consts';
-import { AccountResult } from '@google-sheets/interfaces/google-sheets.interface';
 
 export class GoogleSheetsService implements AbstractClassService<GoogleSheetsService> {
   private static instance: GoogleSheetsService;
@@ -61,6 +66,8 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     transactionComment: string,
     chatId: string,
     firstName: string,
+    accountName: string,
+    accountId: string,
   ): TransactionResult {
     try {
       const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTIONS);
@@ -83,8 +90,20 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       // Находим первую свободную строку
       const nextRow = sheet.getLastRow() + 1;
 
-      // Подготавливаем данные для записи в порядке: id, transactionType, amount, transactionCategory, date, time
-      const rowData: [number, string, string, string, string, string, string, string, string] = [
+      // Подготавливаем данные для записи в порядке: id, transactionType, amount, transactionCategory, date, time, comment, chatId, firstName, accountName, accountId
+      const rowData: [
+        number,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+      ] = [
         nextId, // ID
         transactionType, // Тип транзакции
         amount, // Сумма
@@ -94,6 +113,8 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
         transactionComment, // Комментарий
         chatId, // ID чата
         firstName, // Имя пользователя
+        accountName, // Название счета
+        accountId, // ID счета
       ];
 
       // Записываем данные в строку
@@ -309,6 +330,85 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
         `❌ Ошибка при получении категории по ID ${categoryId}: ${error instanceof Error ? error.message : String(error)}`,
       );
       return null;
+    }
+  }
+
+  public getAccountById(accountId: string): TransactionAccount | null {
+    try {
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.ACCOUNTS);
+
+      if (!sheet) {
+        return null;
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return null; // Если таблица пустая или только заголовки
+      }
+
+      // Получаем все данные начиная со 2-й строки (id, name, currency, currentBalance, accountComment)
+      const data = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+
+      // Ищем счет по ID
+      const accountRow = data.find((row) => row[0].toString() === accountId);
+
+      if (!accountRow) {
+        return null; // Счет не найден
+      }
+
+      // Возвращаем найденный счет
+      return {
+        id: accountRow[0] as number,
+        name: accountRow[1] as string,
+        currency: accountRow[2] as string,
+        currentBalance: accountRow[3] as string,
+        accountComment: accountRow[4] as string,
+      };
+    } catch (error) {
+      this.messageService.sendText(
+        Number(getAdminId()),
+        `❌ Ошибка при получении счета по ID ${accountId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return null;
+    }
+  }
+
+  public getAllAccounts(): TransactionAccount[] {
+    try {
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.ACCOUNTS);
+
+      if (!sheet) {
+        return [];
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return []; // Если таблица пустая или только заголовки
+      }
+
+      // Получаем все данные начиная со 2-й строки (id, name, currency, currentBalance, accountComment)
+      const data = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+
+      // Преобразуем данные в массив объектов Account
+      const accounts: TransactionAccount[] = data
+        .filter((row) => row[0] !== '' && row[0] !== null) // Фильтруем пустые строки
+        .map((row) => ({
+          id: row[0] as number,
+          name: row[1] as string,
+          currency: row[2] as string,
+          currentBalance: row[3] as string,
+          accountComment: row[4] as string,
+        }));
+
+      return accounts;
+    } catch (error) {
+      this.messageService.sendText(
+        Number(getAdminId()),
+        `❌ Ошибка при получении всех счетов: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return [];
     }
   }
 

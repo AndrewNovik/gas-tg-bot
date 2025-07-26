@@ -13,6 +13,7 @@ export const USERS_ID = [396628436, 1009697451];
 export const ID_PREFIX = 'id_';
 export const CALLBACK_PREFIX = 'callback_';
 export const CHOOSE_CATEGORY = 'choose_category_';
+export const CHOOSE_ACCOUNT = 'choose_account_';
 export const CHOOSE_TRANSACTION_TYPE = 'choose_transaction_type_';
 export const CONFIRM_DESICION = 'confirm_desicion_';
 

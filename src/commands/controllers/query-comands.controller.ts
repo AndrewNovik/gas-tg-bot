@@ -70,6 +70,16 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
       return;
     }
 
+    // Проверяем, начинается ли callback с ключа выбора счета транзакции
+    if (
+      data.startsWith(CALLBACK_COMMANDS.CHOOSE_TRANSACTION_ACCOUNT) &&
+      state?.step === STATE_STEPS.ADD_TRANSACTION_ACCOUNT_TYPE
+    ) {
+      const accountId = data.replace(CALLBACK_COMMANDS.CHOOSE_TRANSACTION_ACCOUNT, '');
+      this.queryCommandsFacade.handleChooseTransactionAccount(chatId, accountId);
+      return;
+    }
+
     // Обработка колбеков для подтверждения или отмены действий
     if (data.startsWith(CONFIRM_DESICION + CALLBACK_PREFIX)) {
       const action: CONFIRM_ACTION = data.replace(
