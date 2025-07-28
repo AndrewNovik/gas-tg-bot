@@ -80,6 +80,26 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
       return;
     }
 
+    // Проверяем, начинается ли callback с ключа выбора счета списания для трансфера
+    if (
+      data.startsWith(CALLBACK_COMMANDS.CHOOSE_TRANSFER_FROM_ACCOUNT) &&
+      state?.step === STATE_STEPS.ADD_TRANSFER_FROM_ACCOUNT
+    ) {
+      const accountId = data.replace(CALLBACK_COMMANDS.CHOOSE_TRANSFER_FROM_ACCOUNT, '');
+      this.queryCommandsFacade.handleChooseTransferFromAccount(chatId, accountId);
+      return;
+    }
+
+    // Проверяем, начинается ли callback с ключа выбора счета пополнения для трансфера
+    if (
+      data.startsWith(CALLBACK_COMMANDS.CHOOSE_TRANSFER_TO_ACCOUNT) &&
+      state?.step === STATE_STEPS.ADD_TRANSFER_TO_ACCOUNT
+    ) {
+      const accountId = data.replace(CALLBACK_COMMANDS.CHOOSE_TRANSFER_TO_ACCOUNT, '');
+      this.queryCommandsFacade.handleChooseTransferToAccount(chatId, accountId);
+      return;
+    }
+
     // Обработка колбеков для подтверждения или отмены действий
     if (data.startsWith(CONFIRM_DESICION + CALLBACK_PREFIX)) {
       const action: CONFIRM_ACTION = data.replace(
@@ -133,6 +153,21 @@ export class QueryCommandsController implements AbstractClassService<QueryComman
               return;
             case CONFIRM_ACTION.ADD_COMMENT:
               this.queryCommandsFacade.handleAddCommentToAccount(chatId);
+              return;
+          }
+        case STATE_STEPS.ADD_TRANSFER_CONFIRM:
+          switch (action) {
+            case CONFIRM_ACTION.CONFIRM:
+              this.queryCommandsFacade.handleConfirmTransfer(chatId, state, firstName);
+              return;
+            case CONFIRM_ACTION.CANCEL:
+              this.queryCommandsFacade.handleCancelTransfer(chatId);
+              return;
+            case CONFIRM_ACTION.EDIT:
+              this.queryCommandsFacade.handleEditTransfer(chatId);
+              return;
+            case CONFIRM_ACTION.ADD_COMMENT:
+              this.queryCommandsFacade.handleAddCommentToTransfer(chatId);
               return;
           }
       }

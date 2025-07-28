@@ -14,8 +14,14 @@ export const ID_PREFIX = 'id_';
 export const CALLBACK_PREFIX = 'callback_';
 export const CHOOSE_CATEGORY = 'choose_category_';
 export const CHOOSE_ACCOUNT = 'choose_account_';
+export const CHOOSE_FROM_ACCOUNT = 'choose_from_account_';
+export const CHOOSE_TO_ACCOUNT = 'choose_to_account_';
 export const CHOOSE_TRANSACTION_TYPE = 'choose_transaction_type_';
 export const CONFIRM_DESICION = 'confirm_desicion_';
+
+// TRANSFER CATEGORIES
+export const TRANSFER_DEBIT_CATEGORY = 'Трансфер списание';
+export const TRANSFER_CREDIT_CATEGORY = 'Трансфер пополнение';
 
 export const startMenuReplyKeyboard: TelegramReplyKeyboardInterface = {
   keyboard: [

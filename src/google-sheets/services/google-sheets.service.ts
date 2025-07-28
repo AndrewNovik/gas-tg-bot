@@ -79,6 +79,28 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
         };
       }
 
+      // Получаем текущий баланс счета
+      const account = this.getAccountById(accountId);
+      if (!account) {
+        return {
+          success: false,
+          error: `Счет с ID ${accountId} не найден`,
+        };
+      }
+
+      const currentBalance = parseFloat(account.currentBalance);
+      const transactionAmount = parseFloat(amount);
+
+      // Вычисляем новый баланс в зависимости от типа транзакции
+      let newBalance: number;
+      if (transactionType === 'income') {
+        newBalance = currentBalance + transactionAmount;
+      } else if (transactionType === 'expense') {
+        newBalance = currentBalance - transactionAmount;
+      } else {
+        newBalance = currentBalance; // Для transfer логика обрабатывается отдельно
+      }
+
       // Получаем следующий ID транзакции
       const nextId = this.getNextTransactionId();
 
@@ -90,9 +112,11 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       // Находим первую свободную строку
       const nextRow = sheet.getLastRow() + 1;
 
-      // Подготавливаем данные для записи в порядке: id, transactionType, amount, transactionCategory, date, time, comment, chatId, firstName, accountName, accountId
+      // Подготавливаем данные для записи в порядке: id, transactionType, amount, transactionCategory, date, time, comment, chatId, firstName, accountName, accountId, balanceBefore, balanceAfter
       const rowData: [
         number,
+        string,
+        string,
         string,
         string,
         string,
@@ -115,10 +139,22 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
         firstName, // Имя пользователя
         accountName, // Название счета
         accountId, // ID счета
+        currentBalance.toString(), // Баланс до транзакции
+        newBalance.toString(), // Баланс после транзакции
       ];
 
       // Записываем данные в строку
       sheet.getRange(nextRow, 1, 1, rowData.length).setValues([rowData]);
+
+      // Обновляем баланс счета
+      const balanceUpdateSuccess = this.updateAccountBalance(accountId, newBalance.toString());
+
+      if (!balanceUpdateSuccess) {
+        return {
+          success: false,
+          error: 'Ошибка при обновлении баланса счета',
+        };
+      }
 
       return {
         success: true,
@@ -486,6 +522,43 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
       this.messageService.sendText(
         Number(getAdminId()),
         `❌ Ошибка при проверке существования счета: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return false;
+    }
+  }
+
+  public updateAccountBalance(accountId: string, newBalance: string): boolean {
+    try {
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.ACCOUNTS);
+
+      if (!sheet) {
+        return false;
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return false; // Если таблица пустая или только заголовки
+      }
+
+      // Получаем все данные начиная со 2-й строки
+      const data = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+
+      // Ищем строку с нужным ID счета
+      for (let i = 0; i < data.length; i++) {
+        if (data[i][0].toString() === accountId) {
+          // Обновляем баланс (колонка 4, индекс 3)
+          const rowNumber = i + 2; // +2 потому что начинаем с 2-й строки
+          sheet.getRange(rowNumber, 4).setValue(newBalance);
+          return true;
+        }
+      }
+
+      return false; // Счет не найден
+    } catch (error) {
+      this.messageService.sendText(
+        Number(getAdminId()),
+        `❌ Ошибка при обновлении баланса счета ${accountId}: ${error instanceof Error ? error.message : String(error)}`,
       );
       return false;
     }

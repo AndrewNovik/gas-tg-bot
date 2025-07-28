@@ -80,10 +80,7 @@ export class TextCommandsController implements AbstractClassService<TextCommands
 
       case MAIN_COMMANDS.ADDTRANSFER:
       case TEXT_COMMANDS.TRANSFER:
-        this.textCommandsFacade.mainCommandAddTransactionChooseAccount(
-          chatId,
-          TRANSACTION_TYPE.TRANSFER,
-        );
+        this.textCommandsFacade.mainCommandAddTransferStart(chatId);
         break;
 
       case MAIN_COMMANDS.CANCEL:
@@ -167,6 +164,14 @@ export class TextCommandsController implements AbstractClassService<TextCommands
 
           case STATE_STEPS.ADD_ACCOUNT_COMMENT:
             this.textCommandsFacade.handleAddAccountComment(chatId, text);
+            break;
+
+          case STATE_STEPS.ADD_TRANSFER_AMOUNT:
+            this.textCommandsFacade.handleAddTransferAmount(chatId, text);
+            break;
+
+          case STATE_STEPS.ADD_TRANSFER_COMMENT:
+            this.textCommandsFacade.handleAddTransferComment(chatId, text);
             break;
 
           default:

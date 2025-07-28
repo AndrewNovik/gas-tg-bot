@@ -388,4 +388,93 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
       confirmInlineKeyboard,
     );
   }
+
+  public mainCommandAddTransferStart(chatId: number): void {
+    // Получаем все счета
+    const accounts = this.googleSheetsService.getAllAccounts();
+
+    if (accounts.length === 0) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Счета не найдены. Сначала добавьте счета через /addaccount`,
+      );
+      this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+      return;
+    }
+
+    if (accounts.length < 2) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Для трансфера нужно минимум 2 счета. Добавьте еще счета через /addaccount`,
+      );
+      this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+      return;
+    }
+
+    // Создаем клавиатуру со счетами для списания
+    const keyboard: TelegramInlineKeyboardInterface = {
+      inline_keyboard: this.commandService.createTransferFromAccountInlineKeyboard(accounts),
+    };
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      TEXT_MESSAGES.CHOOSE_FROM_ACCOUNT_FOR_TRANSFER,
+      keyboard,
+    );
+    this.stateManager.setUserState(chatId, STATE_STEPS.ADD_TRANSFER_FROM_ACCOUNT);
+  }
+
+  public handleAddTransferAmount(chatId: number, text: string): void {
+    const trimmedText = text.trim();
+    const extractedAmount = this.extractNumberFromText(trimmedText);
+
+    if (extractedAmount === null) {
+      this.messageService.sendText(
+        chatId,
+        '❌ Не удалось найти числовое значение. Попробуй еще раз, например: "100" или "50.50"',
+      );
+      return;
+    }
+
+    const amountString = extractedAmount.toString();
+    this.stateManager.updateUserStateData(chatId, { transferAmount: amountString });
+
+    const currentUserState = this.stateManager.getUserState(chatId);
+    const data = currentUserState?.data;
+
+    const { transferFromAccount, transferToAccount, transferAmount } = data as {
+      transferFromAccount: TransactionAccount;
+      transferToAccount: TransactionAccount;
+      transferAmount: string;
+    };
+
+    const transferComment = data?.transferComment || '';
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      `✅ Проверьте данные трансфера: \nСо счета: ${transferFromAccount.name} \nНа счет: ${transferToAccount.name} \nСумма: ${transferAmount} \n${transferComment.length > 0 ? `Комментарий: ${transferComment}` : ''}`,
+      confirmInlineKeyboard,
+    );
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSFER_CONFIRM);
+  }
+
+  public handleAddTransferComment(chatId: number, text: string): void {
+    const trimmedText = text.trim();
+    this.stateManager.updateUserStateData(chatId, { transferComment: trimmedText ?? '' });
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSFER_CONFIRM);
+
+    const data = this.stateManager.getUserState(chatId)?.data;
+    const { transferFromAccount, transferToAccount, transferAmount, transferComment } = data as {
+      transferFromAccount: TransactionAccount;
+      transferToAccount: TransactionAccount;
+      transferAmount: string;
+      transferComment: string;
+    };
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      `✅ Проверьте данные трансфера: \nСо счета: ${transferFromAccount.name} \nНа счет: ${transferToAccount.name} \nСумма: ${transferAmount} \n${transferComment.length > 0 ? `Комментарий: ${transferComment}` : ''}`,
+      confirmInlineKeyboard,
+    );
+  }
 }

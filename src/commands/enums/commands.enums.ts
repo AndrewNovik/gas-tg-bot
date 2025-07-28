@@ -1,6 +1,8 @@
 import {
   CHOOSE_CATEGORY,
   CHOOSE_ACCOUNT,
+  CHOOSE_FROM_ACCOUNT,
+  CHOOSE_TO_ACCOUNT,
   CALLBACK_PREFIX,
   ID_PREFIX,
   CHOOSE_TRANSACTION_TYPE,
@@ -95,6 +97,14 @@ export enum TEXT_MESSAGES {
   ACCOUNT_NOT_ADDED = '❌ error adding account',
   ACCOUNT_NOT_FOUND = '❌ account not found',
   ACCOUNT_ALREADY_EXISTS = '❌ account already exists',
+  // TRANSFER
+  CHOOSE_FROM_ACCOUNT_FOR_TRANSFER = '💳 Выберите счет списания',
+  CHOOSE_TO_ACCOUNT_FOR_TRANSFER = '💳 Выберите счет пополнения',
+  ENTER_TRANSFER_AMOUNT = '💰 Введите сумму трансфера',
+  TRANSFER_ADDED = '✅ трансфер выполнен',
+  TRANSFER_NOT_ADDED = '❌ ошибка при создании трансфера',
+  CANCEL_TRANSFER = '✅ трансфер отменен',
+  EDIT_TRANSFER = '✏️ редактировать трансфер',
 }
 
 export enum CALLBACK_COMMANDS {
@@ -106,6 +116,10 @@ export enum CALLBACK_COMMANDS {
   // Выбор категории для транзакции через id
   CHOOSE_TRANSACTION_CATEGORY = `${CHOOSE_CATEGORY}${CALLBACK_PREFIX}${ID_PREFIX}`,
   CHOOSE_TRANSACTION_ACCOUNT = `${CHOOSE_ACCOUNT}${CALLBACK_PREFIX}${ID_PREFIX}`,
+
+  // Выбор счетов для трансфера
+  CHOOSE_TRANSFER_FROM_ACCOUNT = `${CHOOSE_FROM_ACCOUNT}${CALLBACK_PREFIX}${ID_PREFIX}`,
+  CHOOSE_TRANSFER_TO_ACCOUNT = `${CHOOSE_TO_ACCOUNT}${CALLBACK_PREFIX}${ID_PREFIX}`,
 
   // Колбеки для подтверждения или отмены действий
   CONFIRM = `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.CONFIRM}`,

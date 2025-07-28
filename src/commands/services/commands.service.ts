@@ -1,14 +1,21 @@
-import { BotCommand, CALLBACK_COMMANDS, setupBotCommands } from '@commands';
+import { BotCommand, CALLBACK_COMMANDS, setupBotCommands, TEXT_MESSAGES } from '@commands';
 import { MessageService } from '@messages';
 import { AbstractClassService, getAdminId, getApiUrl, getToken } from '@shared';
 import { TransactionCategory, TransactionAccount } from '@google-sheets/interfaces';
+import { GoogleSheetsService } from '@google-sheets/services';
+import { StateManager, STATE_STEPS } from '@state';
+import { TelegramInlineKeyboardInterface } from '@telegram-api';
 
 export class CommandService implements AbstractClassService<CommandService> {
   private static instance: CommandService;
   private messageService: MessageService;
+  private googleSheetsService: GoogleSheetsService;
+  private stateManager: StateManager;
 
   private constructor() {
     this.messageService = MessageService.getInstance();
+    this.googleSheetsService = GoogleSheetsService.getInstance();
+    this.stateManager = StateManager.getInstance();
   }
 
   public static getInstance(): CommandService {
@@ -155,5 +162,79 @@ export class CommandService implements AbstractClassService<CommandService> {
     }
 
     return keyboard;
+  }
+
+  public createTransferFromAccountInlineKeyboard(
+    accounts: TransactionAccount[],
+  ): Array<Array<{ text: string; callback_data: string }>> {
+    const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
+    const itemsPerRow = 2; // 2 кнопки в ряду для счетов
+
+    for (let i = 0; i < accounts.length; i += itemsPerRow) {
+      const row: Array<{ text: string; callback_data: string }> = [];
+
+      for (let j = 0; j < itemsPerRow && i + j < accounts.length; j++) {
+        const account = accounts[i + j];
+        row.push({
+          text: `💳 ${account.name} (${account.currency})`,
+          callback_data: `${CALLBACK_COMMANDS.CHOOSE_TRANSFER_FROM_ACCOUNT}${account.id}`,
+        });
+      }
+
+      keyboard.push(row);
+    }
+
+    return keyboard;
+  }
+
+  public createTransferToAccountInlineKeyboard(
+    accounts: TransactionAccount[],
+  ): Array<Array<{ text: string; callback_data: string }>> {
+    const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
+    const itemsPerRow = 2; // 2 кнопки в ряду для счетов
+
+    for (let i = 0; i < accounts.length; i += itemsPerRow) {
+      const row: Array<{ text: string; callback_data: string }> = [];
+
+      for (let j = 0; j < itemsPerRow && i + j < accounts.length; j++) {
+        const account = accounts[i + j];
+        row.push({
+          text: `💳 ${account.name} (${account.currency})`,
+          callback_data: `${CALLBACK_COMMANDS.CHOOSE_TRANSFER_TO_ACCOUNT}${account.id}`,
+        });
+      }
+
+      keyboard.push(row);
+    }
+
+    return keyboard;
+  }
+
+  public handleTransferToAccountChoice(chatId: number, fromAccountId: string): void {
+    // Получаем все счета
+    const accounts = this.googleSheetsService.getAllAccounts();
+    // Исключаем уже выбранный счет списания
+    const availableAccounts = accounts.filter((account) => account.id.toString() !== fromAccountId);
+
+    if (availableAccounts.length === 0) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Нет доступных счетов для пополнения. Все остальные счета недоступны.`,
+      );
+      this.stateManager.updateUserStateStep(chatId, STATE_STEPS.DEFAULT);
+      return;
+    }
+
+    // Создаем клавиатуру со счетами для пополнения
+    const keyboard: TelegramInlineKeyboardInterface = {
+      inline_keyboard: this.createTransferToAccountInlineKeyboard(availableAccounts),
+    };
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      TEXT_MESSAGES.CHOOSE_TO_ACCOUNT_FOR_TRANSFER,
+      keyboard,
+    );
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSFER_TO_ACCOUNT);
   }
 }

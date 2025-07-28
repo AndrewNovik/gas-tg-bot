@@ -4,10 +4,16 @@ import { MessageService } from '@messages/services/message.service';
 import { GoogleSheetsService } from '@google-sheets/services';
 import { TEXT_MESSAGES, TRANSACTION_TYPE, CALLBACK_COMMANDS } from '@commands/enums';
 import { TransactionCategory } from '@google-sheets/interfaces';
-import { startMenuReplyKeyboard, USERS_ID } from '@commands/consts';
+import {
+  startMenuReplyKeyboard,
+  USERS_ID,
+  TRANSFER_DEBIT_CATEGORY,
+  TRANSFER_CREDIT_CATEGORY,
+} from '@commands/consts';
 import { CommandService } from '@commands/services';
 import { getAdminId, getApiUrl, getToken } from '@shared';
 import { TransactionAccount } from '@google-sheets/interfaces/google-sheets.interface';
+import { TelegramInlineKeyboardInterface } from '@telegram-api';
 
 export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFacade> {
   private static instance: QueryCommandsFacade;
@@ -440,5 +446,157 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
   public handleAddCommentToAccount(chatId: number): void {
     this.messageService.sendText(chatId, '📝 Input comment for account:');
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_ACCOUNT_COMMENT);
+  }
+
+  // TRANSFER METHODS
+  public handleChooseTransferFromAccount(chatId: number, accountId: string): void {
+    const account = this.googleSheetsService.getAccountById(accountId);
+    if (!account) {
+      this.messageService.sendText(chatId, TEXT_MESSAGES.ACCOUNT_NOT_FOUND);
+      return;
+    }
+
+    // Сохраняем выбранный счет списания
+    this.stateManager.updateUserStateData(chatId, {
+      transferFromAccount: account,
+    });
+
+    // Переходим к выбору счета пополнения
+    this.commandService.handleTransferToAccountChoice(chatId, accountId);
+  }
+
+  public handleChooseTransferToAccount(chatId: number, accountId: string): void {
+    const account = this.googleSheetsService.getAccountById(accountId);
+    if (!account) {
+      this.messageService.sendText(chatId, TEXT_MESSAGES.ACCOUNT_NOT_FOUND);
+      return;
+    }
+
+    // Сохраняем выбранный счет пополнения
+    this.stateManager.updateUserStateData(chatId, {
+      transferToAccount: account,
+    });
+
+    // Переходим к вводу суммы
+    this.messageService.sendText(chatId, TEXT_MESSAGES.ENTER_TRANSFER_AMOUNT);
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSFER_AMOUNT);
+  }
+
+  public handleConfirmTransfer(chatId: number, state: UserStateInterface, firstName: string): void {
+    try {
+      const data = state.data;
+      const { transferFromAccount, transferToAccount, transferAmount, transferComment } = data as {
+        transferFromAccount: TransactionAccount;
+        transferToAccount: TransactionAccount;
+        transferAmount: string;
+        transferComment?: string;
+      };
+
+      const comment = transferComment || '';
+
+      const debitComment = comment
+        ? `${comment} (перевод на ${transferToAccount.name})`
+        : `Перевод на ${transferToAccount.name}`;
+      const creditComment = comment
+        ? `${comment} (перевод с ${transferFromAccount.name})`
+        : `Перевод с ${transferFromAccount.name}`;
+
+      // Добавляем обе транзакции
+      const debitResult = this.googleSheetsService.addTransaction(
+        TRANSACTION_TYPE.EXPENSE,
+        transferAmount,
+        TRANSFER_DEBIT_CATEGORY,
+        debitComment,
+        chatId.toString(),
+        firstName,
+        transferFromAccount.name,
+        transferFromAccount.id.toString(),
+      );
+
+      const creditResult = this.googleSheetsService.addTransaction(
+        TRANSACTION_TYPE.INCOME,
+        transferAmount,
+        TRANSFER_CREDIT_CATEGORY,
+        creditComment,
+        chatId.toString(),
+        firstName,
+        transferToAccount.name,
+        transferToAccount.id.toString(),
+      );
+
+      if (debitResult.success && creditResult.success) {
+        this.messageService.sendText(chatId, TEXT_MESSAGES.TRANSFER_ADDED);
+        this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
+        this.messageService.sendReplyMarkup(
+          chatId,
+          TEXT_MESSAGES.NEW_ACTION,
+          startMenuReplyKeyboard,
+        );
+      } else {
+        this.messageService.sendText(
+          chatId,
+          `${TEXT_MESSAGES.TRANSFER_NOT_ADDED}: ${debitResult.error || creditResult.error}`,
+        );
+        this.stateManager.updateUserStateStep(chatId, STATE_STEPS.DEFAULT);
+        this.messageService.sendReplyMarkup(
+          chatId,
+          TEXT_MESSAGES.RESET_USER_STATE,
+          startMenuReplyKeyboard,
+        );
+      }
+    } catch (error) {
+      this.messageService.sendText(
+        chatId,
+        `${TEXT_MESSAGES.TRANSFER_NOT_ADDED}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      this.stateManager.updateUserStateStep(chatId, STATE_STEPS.DEFAULT);
+      this.messageService.sendReplyMarkup(
+        chatId,
+        TEXT_MESSAGES.RESET_USER_STATE,
+        startMenuReplyKeyboard,
+      );
+    }
+  }
+
+  public handleCancelTransfer(chatId: number): void {
+    this.messageService.sendText(chatId, TEXT_MESSAGES.CANCEL_TRANSFER);
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.DEFAULT);
+    this.messageService.sendReplyMarkup(
+      chatId,
+      TEXT_MESSAGES.RESET_USER_STATE,
+      startMenuReplyKeyboard,
+    );
+  }
+
+  public handleEditTransfer(chatId: number): void {
+    this.messageService.sendText(chatId, TEXT_MESSAGES.EDIT_TRANSFER);
+    // Получаем все счета
+    const accounts = this.googleSheetsService.getAllAccounts();
+
+    if (accounts.length < 2) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Для трансфера нужно минимум 2 счета. Добавьте еще счета через /addaccount`,
+      );
+      this.stateManager.updateUserStateStep(chatId, STATE_STEPS.DEFAULT);
+      return;
+    }
+
+    // Создаем клавиатуру со счетами для списания
+    const keyboard: TelegramInlineKeyboardInterface = {
+      inline_keyboard: this.commandService.createTransferFromAccountInlineKeyboard(accounts),
+    };
+
+    this.messageService.sendInlineKeyboard(
+      chatId,
+      TEXT_MESSAGES.CHOOSE_FROM_ACCOUNT_FOR_TRANSFER,
+      keyboard,
+    );
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSFER_FROM_ACCOUNT);
+  }
+
+  public handleAddCommentToTransfer(chatId: number): void {
+    this.messageService.sendText(chatId, '📝 Введите комментарий к трансферу:');
+    this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSFER_COMMENT);
   }
 }

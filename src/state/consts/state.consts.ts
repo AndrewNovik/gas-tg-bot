@@ -4,6 +4,7 @@ export const CANCEL = 'cancel';
 export const ADD_CATEGORY = 'add_category';
 export const ADD_TRANSACTION = 'add_transaction';
 export const ADD_ACCOUNT = 'add_account';
+export const ADD_TRANSFER = 'add_transfer';
 export const DEFAULT_STEP = 'default';
 
 // PREFIXES

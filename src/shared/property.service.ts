@@ -1,4 +1,4 @@
-import { config } from '../config';
+import { config } from '../../config';
 
 function setSecrets() {
   PropertiesService.getScriptProperties().setProperties(config);
