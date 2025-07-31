@@ -30,6 +30,10 @@ export enum SETUP_BOT_COMMANDS {
   ADDINCOME = 'addincome',
   ADDEXPENSE = 'addexpense',
   ADDTRANSFER = 'addtransfer',
+  STATS_PER_DAY = 'statsperday',
+  STATS_PER_WEEK = 'statsperweek',
+  STATS_PER_TWO_WEEKS = 'statspetwoweeks',
+  STATS_PER_MONTH = 'statspermonth',
   CANCEL = 'cancel',
 }
 
@@ -42,6 +46,10 @@ export enum MAIN_COMMANDS {
   ADDINCOME = '/addincome',
   ADDEXPENSE = '/addexpense',
   ADDTRANSFER = '/addtransfer',
+  STATS_PER_DAY = '/statsperday',
+  STATS_PER_WEEK = '/statsperweek',
+  STATS_PER_TWO_WEEKS = '/statspetwoweeks',
+  STATS_PER_MONTH = '/statspermonth',
   CANCEL = '/cancel',
 }
 
@@ -54,6 +62,10 @@ export enum TEXT_COMMANDS {
   ADDTRANSACTION = '📝 Add transaction',
   ADDACCOUNT = '📝 Add account',
   CANCEL = '❌ Cancel',
+  STATS_PER_DAY = '📊 Stats per day',
+  STATS_PER_WEEK = '📊 Stats per week',
+  STATS_PER_TWO_WEEKS = '📊 Stats per 2 weeks',
+  STATS_PER_MONTH = '📊 Stats per month',
   // Настройки to do позже
   SETTINGS = '⚙️ Settings',
 }
@@ -126,4 +138,11 @@ export enum CALLBACK_COMMANDS {
   CANCEL = `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.CANCEL}`,
   EDIT = `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.EDIT}`,
   ADD_COMMENT = `${CONFIRM_DESICION}${CALLBACK_PREFIX}${CONFIRM_ACTION.ADD_COMMENT}`,
+}
+
+export enum STATS_PER_PERIOD {
+  DAY = 'day',
+  WEEK = 'week',
+  TWO_WEEKS = 'two_weeks',
+  MONTH = 'month',
 }

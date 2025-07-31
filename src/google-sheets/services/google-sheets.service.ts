@@ -564,6 +564,34 @@ export class GoogleSheetsService implements AbstractClassService<GoogleSheetsSer
     }
   }
 
+  public getAllTransactions(): any[] {
+    try {
+      const sheet = this.connectToGoogleSheet(GOOGLE_SHEETS_NAMES.TRANSACTIONS);
+
+      if (!sheet) {
+        return [];
+      }
+
+      const lastRow = sheet.getLastRow();
+
+      if (lastRow <= 1) {
+        return []; // Если таблица пустая или только заголовки
+      }
+
+      // Получаем все данные начиная со 2-й строки
+      // Структура: id, transactionType, amount, transactionCategory, date, time, comment, chatId, firstName, accountName, accountId, balanceBefore, balanceAfter
+      const data = sheet.getRange(2, 1, lastRow - 1, 13).getValues();
+
+      return data.filter((row) => row[0] !== '' && row[0] !== null); // Фильтруем пустые строки
+    } catch (error) {
+      this.messageService.sendText(
+        Number(getAdminId()),
+        `❌ Ошибка при получении транзакций: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return [];
+    }
+  }
+
   public addAccount(
     accountName: string,
     accountCurrency: string,

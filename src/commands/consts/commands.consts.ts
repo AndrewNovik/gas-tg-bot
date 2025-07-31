@@ -27,6 +27,8 @@ export const startMenuReplyKeyboard: TelegramReplyKeyboardInterface = {
   keyboard: [
     [TEXT_COMMANDS.INCOME, TEXT_COMMANDS.EXPENSE, TEXT_COMMANDS.TRANSFER],
     [TEXT_COMMANDS.ADDCATEGORY, TEXT_COMMANDS.ADDTRANSACTION, TEXT_COMMANDS.ADDACCOUNT],
+    [TEXT_COMMANDS.STATS_PER_DAY, TEXT_COMMANDS.STATS_PER_WEEK],
+    [TEXT_COMMANDS.STATS_PER_TWO_WEEKS, TEXT_COMMANDS.STATS_PER_MONTH],
     [TEXT_COMMANDS.SETTINGS],
   ],
   resize_keyboard: true, // автоматически подгоняет размер кнопок
@@ -88,6 +90,22 @@ export const setupBotCommands: BotCommand[] = [
   {
     command: SETUP_BOT_COMMANDS.ADDTRANSFER,
     description: '💸 Add transfer',
+  },
+  {
+    command: SETUP_BOT_COMMANDS.STATS_PER_DAY,
+    description: '📊 Stats per day',
+  },
+  {
+    command: SETUP_BOT_COMMANDS.STATS_PER_WEEK,
+    description: '📊 Stats per week',
+  },
+  {
+    command: SETUP_BOT_COMMANDS.STATS_PER_TWO_WEEKS,
+    description: '📊 Stats per 2 weeks',
+  },
+  {
+    command: SETUP_BOT_COMMANDS.STATS_PER_MONTH,
+    description: '📊 Stats per month',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDACCOUNT,

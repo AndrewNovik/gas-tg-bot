@@ -4,7 +4,7 @@ import {
   confirmInlineKeyboard,
   startMenuReplyKeyboard,
 } from '@commands/consts';
-import { TEXT_MESSAGES, TRANSACTION_TYPE } from '@commands';
+import { STATS_PER_PERIOD, TEXT_MESSAGES, TRANSACTION_TYPE } from '@commands';
 import { CommandService } from '@commands/services';
 import { TransactionAccount, TransactionCategory } from '@google-sheets/interfaces';
 import { GoogleSheetsService } from '@google-sheets/services';
@@ -476,5 +476,202 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
       `✅ Проверьте данные трансфера: \nСо счета: ${transferFromAccount.name} \nНа счет: ${transferToAccount.name} \nСумма: ${transferAmount} \n${transferComment.length > 0 ? `Комментарий: ${transferComment}` : ''}`,
       confirmInlineKeyboard,
     );
+  }
+
+  public mainCommandStatsPerPeriod(chatId: number, period: STATS_PER_PERIOD): void {
+    try {
+      if (period === STATS_PER_PERIOD.DAY) {
+        this.showStatsPerPeriod(chatId, period);
+      } else if (period === STATS_PER_PERIOD.WEEK) {
+        this.showStatsPerPeriod(chatId, period);
+      } else if (period === STATS_PER_PERIOD.TWO_WEEKS) {
+        this.showStatsPerPeriod(chatId, period);
+      } else if (period === STATS_PER_PERIOD.MONTH) {
+        this.showStatsPerPeriod(chatId, period);
+      } else {
+        this.messageService.sendText(chatId, '❌ Неизвестный период для статистики');
+      }
+    } catch (error) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Ошибка при получении статистики: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  private showStatsPerPeriod(chatId: number, period: STATS_PER_PERIOD): void {
+    try {
+      // Получаем все транзакции
+      const allTransactions = this.googleSheetsService.getAllTransactions();
+
+      if (allTransactions.length === 0) {
+        this.messageService.sendText(chatId, '📊 Транзакций пока нет');
+        return;
+      }
+
+      // Определяем диапазон дат для фильтрации
+      const { startDate, endDate, periodTitle } = this.getDateRangeForPeriod(period);
+
+      // Фильтруем транзакции по диапазону дат (индекс 4 - дата)
+      const filteredTransactions = allTransactions.filter((transaction) => {
+        const transactionDateString = transaction[4]; // Дата находится под индексом 4
+        const transactionDate = this.parseDate(transactionDateString);
+
+        if (!transactionDate) return false;
+
+        return transactionDate >= startDate && transactionDate <= endDate;
+      });
+
+      if (filteredTransactions.length === 0) {
+        this.messageService.sendText(chatId, `📊 Транзакций за ${periodTitle} нет`);
+        return;
+      }
+
+      // Подсчитываем дельту
+      let totalDelta = 0;
+      let incomeTotal = 0;
+      let expenseTotal = 0;
+      let transferCount = 0;
+
+      const categoriesSummary: { [key: string]: { amount: number; type: string } } = {};
+
+      filteredTransactions.forEach((transaction) => {
+        const transactionType = transaction[1]; // Тип транзакции (индекс 1)
+        const amount = parseFloat(transaction[2]); // Сумма (индекс 2)
+        const category = transaction[3]; // Категория (индекс 3)
+
+        if (transactionType === TRANSACTION_TYPE.INCOME) {
+          totalDelta += amount;
+          incomeTotal += amount;
+        } else if (transactionType === TRANSACTION_TYPE.EXPENSE) {
+          totalDelta -= amount;
+          expenseTotal += amount;
+        } else if (transactionType === TRANSACTION_TYPE.TRANSFER) {
+          transferCount++;
+          // Для трансферов не меняем общую дельту, так как это внутренние переводы
+        }
+
+        // Группируем по категориям с учетом типа
+        if (categoriesSummary[category]) {
+          categoriesSummary[category].amount += amount;
+        } else {
+          categoriesSummary[category] = {
+            amount: amount,
+            type: transactionType,
+          };
+        }
+      });
+
+      // Формируем сообщение с результатами
+      let statsMessage = `📊 *Статистика за ${periodTitle}*\n\n`;
+
+      // Общая информация
+      statsMessage += `💰 *Общая дельта:* ${totalDelta > 0 ? '+' : ''}${totalDelta.toFixed(2)} BYN\n`;
+      statsMessage += `💵 *Доходы:* +${incomeTotal.toFixed(2)} BYN\n`;
+      statsMessage += `💸 *Расходы:* -${expenseTotal.toFixed(2)} BYN\n`;
+
+      if (transferCount > 0) {
+        statsMessage += `🔄 *Переводы:* ${transferCount} шт.\n`;
+      }
+
+      statsMessage += `📋 *Всего транзакций:* ${filteredTransactions.length} шт.\n\n`;
+
+      // Статистика по категориям
+      if (Object.keys(categoriesSummary).length > 0) {
+        statsMessage += `📂 *По категориям:*\n`;
+        Object.entries(categoriesSummary)
+          .sort(([, a], [, b]) => b.amount - a.amount) // Сортируем по убыванию суммы
+          .forEach(([category, data]) => {
+            const sign =
+              data.type === TRANSACTION_TYPE.INCOME
+                ? '+'
+                : data.type === TRANSACTION_TYPE.EXPENSE
+                  ? '-'
+                  : '';
+            statsMessage += `  • ${category}: ${sign}${data.amount.toFixed(2)} BYN\n`;
+          });
+      }
+
+      this.messageService.sendText(chatId, statsMessage);
+    } catch (error) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Ошибка при подсчете статистики: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  private getDateRangeForPeriod(period: STATS_PER_PERIOD): {
+    startDate: Date;
+    endDate: Date;
+    periodTitle: string;
+  } {
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setHours(23, 59, 59, 999); // Конец дня
+
+    let startDate: Date;
+    let periodTitle: string;
+
+    switch (period) {
+      case STATS_PER_PERIOD.DAY:
+        startDate = new Date(today);
+        startDate.setHours(0, 0, 0, 0); // Начало дня
+        periodTitle = `сегодня (${Utilities.formatDate(today, Session.getScriptTimeZone(), 'dd.MM.yyyy')})`;
+        break;
+
+      case STATS_PER_PERIOD.WEEK:
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 6); // 7 дней назад (включая сегодня)
+        startDate.setHours(0, 0, 0, 0);
+        periodTitle = `неделю (${Utilities.formatDate(startDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')} - ${Utilities.formatDate(endDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')})`;
+        break;
+
+      case STATS_PER_PERIOD.TWO_WEEKS:
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 13); // 14 дней назад (включая сегодня)
+        startDate.setHours(0, 0, 0, 0);
+        periodTitle = `2 недели (${Utilities.formatDate(startDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')} - ${Utilities.formatDate(endDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')})`;
+        break;
+
+      case STATS_PER_PERIOD.MONTH:
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1); // Первый день текущего месяца
+        startDate.setHours(0, 0, 0, 0);
+        periodTitle = `месяц (${Utilities.formatDate(startDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')} - ${Utilities.formatDate(endDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')})`;
+        break;
+
+      default:
+        startDate = new Date(today);
+        startDate.setHours(0, 0, 0, 0);
+        periodTitle = 'неизвестный период';
+        break;
+    }
+
+    return { startDate, endDate, periodTitle };
+  }
+
+  private parseDate(dateString: string): Date | null {
+    try {
+      // Ожидаем формат dd.MM.yyyy
+      const parts = dateString.split('.');
+      if (parts.length !== 3) return null;
+
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Месяцы в JavaScript начинаются с 0
+      const year = parseInt(parts[2], 10);
+
+      if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+
+      const date = new Date(year, month, day);
+
+      // Проверяем валидность даты
+      if (date.getDate() !== day || date.getMonth() !== month || date.getFullYear() !== year) {
+        return null;
+      }
+
+      return date;
+    } catch (error) {
+      return null;
+    }
   }
 }

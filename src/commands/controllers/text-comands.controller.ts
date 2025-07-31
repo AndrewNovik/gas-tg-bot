@@ -3,7 +3,13 @@ import { MessageService } from '@messages';
 import { GoogleSheetsService } from '@google-sheets';
 import { Message } from '@telegram-api';
 import { AbstractClassService } from '@shared';
-import { USERS_ID, MAIN_COMMANDS, TEXT_COMMANDS, TRANSACTION_TYPE } from '@commands';
+import {
+  USERS_ID,
+  MAIN_COMMANDS,
+  TEXT_COMMANDS,
+  TRANSACTION_TYPE,
+  STATS_PER_PERIOD,
+} from '@commands';
 import { TextCommandsFacade } from './text-commands.facade';
 
 export class TextCommandsController implements AbstractClassService<TextCommandsController> {
@@ -86,6 +92,26 @@ export class TextCommandsController implements AbstractClassService<TextCommands
       case MAIN_COMMANDS.CANCEL:
       case TEXT_COMMANDS.CANCEL:
         this.textCommandsFacade.mainCommandCancel(chatId);
+        break;
+
+      case MAIN_COMMANDS.STATS_PER_DAY:
+      case TEXT_COMMANDS.STATS_PER_DAY:
+        this.textCommandsFacade.mainCommandStatsPerPeriod(chatId, STATS_PER_PERIOD.DAY);
+        break;
+
+      case MAIN_COMMANDS.STATS_PER_WEEK:
+      case TEXT_COMMANDS.STATS_PER_WEEK:
+        this.textCommandsFacade.mainCommandStatsPerPeriod(chatId, STATS_PER_PERIOD.WEEK);
+        break;
+
+      case MAIN_COMMANDS.STATS_PER_TWO_WEEKS:
+      case TEXT_COMMANDS.STATS_PER_TWO_WEEKS:
+        this.textCommandsFacade.mainCommandStatsPerPeriod(chatId, STATS_PER_PERIOD.TWO_WEEKS);
+        break;
+
+      case MAIN_COMMANDS.STATS_PER_MONTH:
+      case TEXT_COMMANDS.STATS_PER_MONTH:
+        this.textCommandsFacade.mainCommandStatsPerPeriod(chatId, STATS_PER_PERIOD.MONTH);
         break;
 
       default:
