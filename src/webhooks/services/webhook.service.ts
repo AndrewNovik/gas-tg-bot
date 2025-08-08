@@ -3,8 +3,6 @@ import { getApiUrl, getToken, getWebAppId } from '@shared';
 export class WebhookService {
   private static instance: WebhookService;
 
-  private constructor() {}
-
   public static getInstance(): WebhookService {
     if (!WebhookService.instance) {
       WebhookService.instance = new WebhookService();

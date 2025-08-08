@@ -27,6 +27,7 @@ export const startMenuReplyKeyboard: TelegramReplyKeyboardInterface = {
   keyboard: [
     [TEXT_COMMANDS.INCOME, TEXT_COMMANDS.EXPENSE, TEXT_COMMANDS.TRANSFER],
     [TEXT_COMMANDS.ADDCATEGORY, TEXT_COMMANDS.ADDTRANSACTION, TEXT_COMMANDS.ADDACCOUNT],
+    [TEXT_COMMANDS.ACCOUNT_BALANCES, TEXT_COMMANDS.TRANSACTION_CATEGORIES],
     [TEXT_COMMANDS.STATS_PER_DAY, TEXT_COMMANDS.STATS_PER_WEEK],
     [TEXT_COMMANDS.STATS_PER_TWO_WEEKS, TEXT_COMMANDS.STATS_PER_MONTH],
     [TEXT_COMMANDS.SETTINGS],
@@ -69,51 +70,59 @@ export const confirmInlineKeyboard: TelegramInlineKeyboardInterface = {
 export const setupBotCommands: BotCommand[] = [
   {
     command: SETUP_BOT_COMMANDS.START,
-    description: '👋 Start working with bot',
+    description: '👋 Начало работы с ботом',
+  },
+  {
+    command: SETUP_BOT_COMMANDS.ACCOUNT_BALANCES,
+    description: '💳 Балансы счетов',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDTRANSACTION,
-    description: '📝 Add new transaction',
+    description: '📝 Добавить новую транзакцию',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDCATEGORY,
-    description: '📝 Add new category',
+    description: '📝 Добавить новую категорию',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDINCOME,
-    description: '💵 Add income',
+    description: '💵 Добавить доход',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDEXPENSE,
-    description: '💸 Add expense',
+    description: '💸 Добавить расход',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDTRANSFER,
-    description: '💸 Add transfer',
+    description: '💸 Добавить трансфер',
   },
   {
     command: SETUP_BOT_COMMANDS.STATS_PER_DAY,
-    description: '📊 Stats per day',
+    description: '📊 Статистика за день',
   },
   {
     command: SETUP_BOT_COMMANDS.STATS_PER_WEEK,
-    description: '📊 Stats per week',
+    description: '📊 Статистика за неделю',
   },
   {
     command: SETUP_BOT_COMMANDS.STATS_PER_TWO_WEEKS,
-    description: '📊 Stats per 2 weeks',
+    description: '📊 Статистика за 2 недели',
   },
   {
     command: SETUP_BOT_COMMANDS.STATS_PER_MONTH,
-    description: '📊 Stats per month',
+    description: '📊 Статистика за текущий месяц',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDACCOUNT,
-    description: '📝 Add new account',
+    description: '📝 Добавить новый счет',
+  },
+  {
+    command: SETUP_BOT_COMMANDS.TRANSACTION_CATEGORIES,
+    description: '📝 Список категорий',
   },
   {
     command: SETUP_BOT_COMMANDS.CANCEL,
-    description: '❌ Cancel current actions',
+    description: '❌ Отменить текущие действия',
   },
 ];
 
@@ -121,15 +130,15 @@ export const addCategoryTypeInlienKeyboard: TelegramInlineKeyboardInterface = {
   inline_keyboard: [
     [
       {
-        text: `💵 Income`,
+        text: `💵 Доход`,
         callback_data: `${CALLBACK_COMMANDS.INCOME}`,
       },
       {
-        text: `💸 Expense`,
+        text: `💸 Расход`,
         callback_data: `${CALLBACK_COMMANDS.EXPENSE}`,
       },
       {
-        text: `💸 Transfer`,
+        text: `💸 Трансфер`,
         callback_data: `${CALLBACK_COMMANDS.TRANSFER}`,
       },
     ],

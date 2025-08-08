@@ -10,10 +10,10 @@ import {
 } from '@commands/consts/commands.consts';
 
 export enum CONFIRM_ACTION {
-  EDIT = 'edit',
-  CONFIRM = 'confirm',
-  CANCEL = 'cancel',
-  ADD_COMMENT = 'comment',
+  EDIT = 'редактировать',
+  CONFIRM = 'подтвердить',
+  CANCEL = 'отмена',
+  ADD_COMMENT = 'комментарий',
 }
 
 export enum TRANSACTION_TYPE {
@@ -34,6 +34,8 @@ export enum SETUP_BOT_COMMANDS {
   STATS_PER_WEEK = 'statsperweek',
   STATS_PER_TWO_WEEKS = 'statspetwoweeks',
   STATS_PER_MONTH = 'statspermonth',
+  ACCOUNT_BALANCES = 'accountbalances',
+  TRANSACTION_CATEGORIES = 'transactioncategories',
   CANCEL = 'cancel',
 }
 
@@ -50,65 +52,69 @@ export enum MAIN_COMMANDS {
   STATS_PER_WEEK = '/statsperweek',
   STATS_PER_TWO_WEEKS = '/statspetwoweeks',
   STATS_PER_MONTH = '/statspermonth',
+  ACCOUNT_BALANCES = '/accountbalances',
+  TRANSACTION_CATEGORIES = '/transactioncategories',
   CANCEL = '/cancel',
 }
 
 // Команды без слеша
 export enum TEXT_COMMANDS {
-  INCOME = '💵 Income',
-  EXPENSE = '💸 Expense',
-  TRANSFER = '💸 Transfer',
-  ADDCATEGORY = '📝 Add category',
-  ADDTRANSACTION = '📝 Add transaction',
-  ADDACCOUNT = '📝 Add account',
-  CANCEL = '❌ Cancel',
-  STATS_PER_DAY = '📊 Stats per day',
-  STATS_PER_WEEK = '📊 Stats per week',
-  STATS_PER_TWO_WEEKS = '📊 Stats per 2 weeks',
-  STATS_PER_MONTH = '📊 Stats per month',
+  INCOME = '💵 Доход',
+  EXPENSE = '💸 Расход',
+  TRANSFER = '💸 Трансфер',
+  ADDCATEGORY = '📝 Добавить категорию',
+  ADDTRANSACTION = '📝 Добавить транзакцию',
+  ADDACCOUNT = '📝 Добавить счет',
+  ACCOUNT_BALANCES = '💳 Балансы счетов',
+  TRANSACTION_CATEGORIES = '📝 Список категорий',
+  CANCEL = '❌ Отмена',
+  STATS_PER_DAY = '📊 Статистика за день',
+  STATS_PER_WEEK = '📊 Статистика за неделю',
+  STATS_PER_TWO_WEEKS = '📊 Статистика за 2 недели',
+  STATS_PER_MONTH = '📊 Статистика за текущий месяц',
   // Настройки to do позже
-  SETTINGS = '⚙️ Settings',
+  SETTINGS = '⚙️ Настройки',
 }
 
 export enum TEXT_MESSAGES {
   // MAIN
-  RESET_USER_STATE = "🔄 Let's start over! Choose an action:",
-  NEW_ACTION = '🔥 Great, what else do you want to add?',
-  UNKNOWN_CALLBACK = '❌ Unknown callback',
-  UNKNOWN_COMMAND = '❌ Unknown command',
-  CRITICAL_ERROR = '❌ Critical error',
-  COMMENT_ADDED = '✅ comment added',
+  RESET_USER_STATE = '🔄 Давайте начнем сначала! Выберите действие:',
+  NEW_ACTION = '🔥 Отлично, что еще вы хотите добавить?',
+  UNKNOWN_CALLBACK = '❌ Неизвестный callback',
+  UNKNOWN_COMMAND = '❌ Неизвестная команда',
+  CRITICAL_ERROR = '❌ Критическая ошибка',
+  COMMENT_ADDED = '✅ комментарий добавлен',
   CHOOSE_ACCOUNT_FOR_TRANSACTION = '💳 Выберите счет для транзакции',
   // CATEGORIES
   // CATEGORY SUCCESS
-  CATEGORY_ADDED = '✅ category added',
-  CATEGORY_DELETED = '✅ category deleted',
-  CANCEL_CATEGORY = '✅ cancel category',
-  EDIT_CATEGORY = '✏️ edit category',
+  CATEGORY_ADDED = '✅ категория добавлена',
+  CATEGORY_DELETED = '✅ категория удалена',
+  CANCEL_CATEGORY = '✅ отмена категории',
+  EDIT_CATEGORY = '✏️ редактировать категорию',
   // CATEGORY ERRORS
-  CATEGORY_NOT_ADDED = '❌ error adding category',
-  CATEGORY_NOT_FOUND = '❌ category not found',
-  CATEGORY_ALREADY_EXISTS = '❌ category already exists',
+  CATEGORY_NOT_ADDED = '❌ ошибка добавления категории',
+  CATEGORY_NOT_FOUND = '❌ категория не найдена',
+  CATEGORY_ALREADY_EXISTS = '❌ категория уже существует',
   // TRANSACTIONS
   // TRANSACTION SUCCESS
-  TRANSACTION_ADDED = '✅ transaction added',
-  TRANSACTION_DELETED = '✅ transaction deleted',
-  CANCEL_TRANSACTION = '✅ cancel transaction',
-  EDIT_TRANSACTION = '✏️ edit transaction',
+  TRANSACTION_ADDED = '✅ транзакция добавлена',
+  TRANSACTION_DELETED = '✅ транзакция удалена',
+  CANCEL_TRANSACTION = '✅ отмена транзакции',
+  EDIT_TRANSACTION = '✏️ редактировать транзакцию',
   // TRANSACTION ERRORS
-  TRANSACTION_NOT_ADDED = '❌ error adding transaction',
-  TRANSACTION_NOT_FOUND = '❌ transaction not found',
-  TRANSACTION_ALREADY_EXISTS = '❌ transaction already exists',
+  TRANSACTION_NOT_ADDED = '❌ ошибка добавления транзакции',
+  TRANSACTION_NOT_FOUND = '❌ транзакция не найдена',
+  TRANSACTION_ALREADY_EXISTS = '❌ транзакция уже существует',
   // ACCOUNTS
   // ACCOUNT SUCCESS
-  ACCOUNT_ADDED = '✅ account added',
-  ACCOUNT_DELETED = '✅ account deleted',
-  CANCEL_ACCOUNT = '✅ cancel account',
-  EDIT_ACCOUNT = '✏️ edit account',
+  ACCOUNT_ADDED = '✅ счет добавлен',
+  ACCOUNT_DELETED = '✅ счет удален',
+  CANCEL_ACCOUNT = '✅ отмена счета',
+  EDIT_ACCOUNT = '✏️ редактировать счет',
   // ACCOUNT ERRORS
-  ACCOUNT_NOT_ADDED = '❌ error adding account',
-  ACCOUNT_NOT_FOUND = '❌ account not found',
-  ACCOUNT_ALREADY_EXISTS = '❌ account already exists',
+  ACCOUNT_NOT_ADDED = '❌ ошибка добавления счета',
+  ACCOUNT_NOT_FOUND = '❌ счет не найден',
+  ACCOUNT_ALREADY_EXISTS = '❌ счет уже существует',
   // TRANSFER
   CHOOSE_FROM_ACCOUNT_FOR_TRANSFER = '💳 Выберите счет списания',
   CHOOSE_TO_ACCOUNT_FOR_TRANSFER = '💳 Выберите счет пополнения',

@@ -114,6 +114,16 @@ export class TextCommandsController implements AbstractClassService<TextCommands
         this.textCommandsFacade.mainCommandStatsPerPeriod(chatId, STATS_PER_PERIOD.MONTH);
         break;
 
+      case MAIN_COMMANDS.ACCOUNT_BALANCES:
+      case TEXT_COMMANDS.ACCOUNT_BALANCES:
+        this.textCommandsFacade.mainCommandAccountBalances(chatId);
+        break;
+
+      case MAIN_COMMANDS.TRANSACTION_CATEGORIES:
+      case TEXT_COMMANDS.TRANSACTION_CATEGORIES:
+        this.textCommandsFacade.mainCommandTransactionCategories(chatId);
+        break;
+
       default:
         // Для других сообщений, которые приходят и должны быть обработаны в зависимости от текущего стейт степа
         const currentUserState = this.stateManager.getUserState(chatId);

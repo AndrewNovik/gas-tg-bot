@@ -10,7 +10,7 @@ import { TransactionAccount, TransactionCategory } from '@google-sheets/interfac
 import { GoogleSheetsService } from '@google-sheets/services';
 import { MessageService } from '@messages/services/message.service';
 import { AbstractClassService } from '@shared/abstract-class.service';
-import { STATE_STEPS, StateManager, UserStateInterface } from '@state';
+import { STATE_STEPS, StateManager } from '@state';
 import { TelegramInlineKeyboardInterface } from '@telegram-api';
 
 export class TextCommandsFacade implements AbstractClassService<TextCommandsFacade> {
@@ -143,7 +143,7 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
 
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Check data: \nTransaction type: ${transactionType} \nAmount: ${amount} \nCategory: ${transactionCategory.name} \nAccount: ${transactionAccount?.name || 'Unknown'} \n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
+      `✅ Проверьте данные: \nТип транзакции: ${transactionType} \nСумма: ${amount} \nКатегория: ${transactionCategory.name} \nСчет: ${transactionAccount?.name || 'Неизвестный'} \n${transactionComment.length > 0 ? `Комментарий: ${transactionComment}` : ''}`,
       confirmInlineKeyboard,
     );
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_CONFIRM);
@@ -166,7 +166,7 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
 
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Check data: \nTransaction type: ${transactionType} \nAmount: ${amount} \nCategory: ${transactionCategory.name} \nAccount: ${transactionAccount?.name || 'Unknown'} \n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
+      `✅ Проверьте данные: \nТип транзакции: ${transactionType} \nСумма: ${amount} \nКатегория: ${transactionCategory.name} \nСчет: ${transactionAccount?.name || 'Неизвестный'} \n${transactionComment.length > 0 ? `Комментарий: ${transactionComment}` : ''}`,
       confirmInlineKeyboard,
     );
   }
@@ -200,8 +200,8 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
         return null;
       }
 
-      // Проверяем, что число положительное
-      if (number <= 0) {
+      // Проверяем, что число не отрицательное
+      if (number < 0) {
         return null;
       }
 
@@ -310,7 +310,7 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
 
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Check data: \nName: ${accountName} \nCurrency: ${accountCurrency} \nBalance: ${accountAmount} \n${accountComment.length > 0 ? `Comment: ${accountComment}` : ''}`,
+      `✅ Проверьте данные: \nНазвание: ${accountName} \nВалюта: ${accountCurrency} \nБаланс: ${accountAmount} \n${accountComment.length > 0 ? `Комментарий: ${accountComment}` : ''}`,
       confirmInlineKeyboard,
     );
   }
@@ -330,7 +330,7 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
 
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Check data: \nName: ${accountName} \nCurrency: ${accountCurrency} \nBalance: ${accountAmount} \n${accountComment.length > 0 ? `Comment: ${accountComment}` : ''}`,
+      `✅ Проверьте данные: \nНазвание: ${accountName} \nВалюта: ${accountCurrency} \nБаланс: ${accountAmount} \n${accountComment.length > 0 ? `Комментарий: ${accountComment}` : ''}`,
       confirmInlineKeyboard,
     );
   }
@@ -363,7 +363,7 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
 
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Check data: \nName: ${categoryName} \nType: ${categoryType} \nEmoji: ${categoryEmoji} \n${categoryComment.length > 0 ? `Comment: ${categoryComment}` : ''}`,
+      `✅ Проверьте данные: \nНазвание: ${categoryName} \nТип: ${categoryType} \nЭмодзи: ${categoryEmoji} \n${categoryComment.length > 0 ? `Комментарий: ${categoryComment}` : ''}`,
       confirmInlineKeyboard,
     );
   }
@@ -384,7 +384,7 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
 
     this.messageService.sendInlineKeyboard(
       chatId,
-      `✅ Check data: \nName: ${categoryName} \nType: ${categoryType} \nEmoji: ${categoryEmoji} \n${categoryComment.length > 0 ? `Comment: ${categoryComment}` : ''}`,
+      `✅ Проверьте данные: \nНазвание: ${categoryName} \nТип: ${categoryType} \nЭмодзи: ${categoryEmoji} \n${categoryComment.length > 0 ? `Комментарий: ${categoryComment}` : ''}`,
       confirmInlineKeyboard,
     );
   }
@@ -672,6 +672,81 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
       return date;
     } catch (error) {
       return null;
+    }
+  }
+
+  public mainCommandAccountBalances(chatId: number): void {
+    try {
+      const accounts = this.googleSheetsService.getAllAccounts();
+
+      if (accounts.length === 0) {
+        this.messageService.sendText(
+          chatId,
+          '❌ Счета не найдены. Сначала добавьте счета через /addaccount',
+        );
+        return;
+      }
+
+      let balancesMessage = '💰 *Балансы счетов:*\n\n';
+
+      accounts.forEach((account) => {
+        const balance = parseFloat(account.currentBalance);
+        const formattedBalance = balance.toFixed(2).replace('.', ',');
+        balancesMessage += `💳 *${account.name}*: ${formattedBalance} ${account.currency}\n`;
+      });
+
+      this.messageService.sendText(chatId, balancesMessage);
+    } catch (error) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Ошибка при получении балансов счетов: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  public mainCommandTransactionCategories(chatId: number): void {
+    try {
+      // Получаем категории доходов и расходов
+      const incomeCategories = this.googleSheetsService.getCategoriesByType(
+        TRANSACTION_TYPE.INCOME,
+      );
+      const expenseCategories = this.googleSheetsService.getCategoriesByType(
+        TRANSACTION_TYPE.EXPENSE,
+      );
+
+      if (incomeCategories.length === 0 && expenseCategories.length === 0) {
+        this.messageService.sendText(
+          chatId,
+          '❌ Категории не найдены. Сначала добавьте категории через /addcategory',
+        );
+        return;
+      }
+
+      let categoriesMessage = '📝 *Список категорий:*\n\n';
+
+      // Добавляем категории доходов
+      if (incomeCategories.length > 0) {
+        categoriesMessage += '💵 *Доходы:*\n';
+        incomeCategories.forEach((category) => {
+          categoriesMessage += `${category.emoji} ${category.name}\n`;
+        });
+        categoriesMessage += '\n';
+      }
+
+      // Добавляем категории расходов
+      if (expenseCategories.length > 0) {
+        categoriesMessage += '💸 *Расходы:*\n';
+        expenseCategories.forEach((category) => {
+          categoriesMessage += `${category.emoji} ${category.name}\n`;
+        });
+      }
+
+      this.messageService.sendText(chatId, categoriesMessage);
+    } catch (error) {
+      this.messageService.sendText(
+        chatId,
+        `❌ Ошибка при получении списка категорий: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 }

@@ -2,7 +2,7 @@ import { AbstractClassService } from '@shared/abstract-class.service';
 import { StateManager, UserStateInterface, STATE_STEPS } from '@state';
 import { MessageService } from '@messages/services/message.service';
 import { GoogleSheetsService } from '@google-sheets/services';
-import { TEXT_MESSAGES, TRANSACTION_TYPE, CALLBACK_COMMANDS } from '@commands/enums';
+import { TEXT_MESSAGES, TRANSACTION_TYPE } from '@commands/enums';
 import { TransactionCategory } from '@google-sheets/interfaces';
 import {
   startMenuReplyKeyboard,
@@ -87,7 +87,7 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
 
       this.messageService.sendText(
         chatId,
-        `Input amount of ${category.type === TRANSACTION_TYPE.INCOME ? 'income' : 'expense'} in ${category.name}:`,
+        `Введите сумму ${category.type === TRANSACTION_TYPE.INCOME ? 'дохода' : 'расхода'} в ${category.name}:`,
       );
     } catch (error) {
       this.messageService.sendText(
@@ -196,10 +196,18 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
       );
 
       if (result.success) {
+        // Получаем обновленный баланс счета после транзакции
+        const updatedAccount = this.googleSheetsService.getAccountById(
+          String(transactionAccount.id),
+        );
+        const balanceInfo = updatedAccount
+          ? `\n💰 Остаток на счете: ${parseFloat(updatedAccount.currentBalance).toFixed(2).replace('.', ',')} ${updatedAccount.currency}`
+          : '';
+
         USERS_ID.forEach((id) => {
           this.messageService.sendText(
             id,
-            `✅ ${firstName} add ${transactionType} for ${amount} BYN in category: ${transactionCategory.name} (Account: ${transactionAccount.name})\n${transactionComment.length > 0 ? `Comment: ${transactionComment}` : ''}`,
+            `✅ ${firstName} добавил ${transactionType} на ${amount} BYN в категорию: ${transactionCategory.name} (Счет: ${transactionAccount.name})${balanceInfo}\n${transactionComment.length > 0 ? `Комментарий: ${transactionComment}` : ''}`,
           );
         });
       } else {
@@ -249,18 +257,18 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
       amount: '',
       transactionCategory,
     });
-    this.messageService.sendText(chatId, '📝 Input new amount of transaction:');
+    this.messageService.sendText(chatId, '📝 Введите новую сумму транзакции:');
   }
 
   public handleAddCommentToTransaction(chatId: number): void {
-    this.messageService.sendText(chatId, '📝 Input comment for transaction:');
+    this.messageService.sendText(chatId, '📝 Введите комментарий к транзакции:');
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_TRANSACTION_COMMENT);
   }
 
   public handleAddinngNewCategoryType(chatId: number, categoryType: TRANSACTION_TYPE): void {
     this.stateManager.updateUserStateData(chatId, { categoryType });
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_CATEGORY_EMOJI);
-    this.messageService.sendText(chatId, `📝 Input emoji for category:`);
+    this.messageService.sendText(chatId, `📝 Введите эмодзи для категории:`);
   }
 
   public handleConfirmCategory(chatId: number, state: UserStateInterface, firstName: string): void {
@@ -310,7 +318,7 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
         USERS_ID.forEach((id) => {
           this.messageService.sendText(
             id,
-            `✅ ${firstName} add new ${categoryType} category: ${categoryName} ${categoryEmoji}\n${categoryComment.length > 0 ? `Comment: ${categoryComment}` : ''}`,
+            `✅ ${firstName} добавил новую категорию: ${categoryName} ${categoryEmoji}\n${categoryComment.length > 0 ? `Комментарий: ${categoryComment}` : ''}`,
           );
         });
       } else {
@@ -351,11 +359,11 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
     this.messageService.sendText(chatId, TEXT_MESSAGES.EDIT_CATEGORY);
     // Возвращаемся к шагу ввода названия для редактирования
     this.stateManager.setUserState(chatId, STATE_STEPS.ADD_CATEGORY_NAME);
-    this.messageService.sendText(chatId, '📝 Input new name of category:');
+    this.messageService.sendText(chatId, '📝 Введите новое название категории:');
   }
 
   public handleAddCommentToCategory(chatId: number): void {
-    this.messageService.sendText(chatId, '📝 Input comment for category:');
+    this.messageService.sendText(chatId, '📝 Введите комментарий к категории:');
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_CATEGORY_COMMENT);
   }
 
@@ -403,7 +411,7 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
         USERS_ID.forEach((id) => {
           this.messageService.sendText(
             id,
-            `✅ ${firstName} add new account: ${accountName} ${accountCurrency} ${accountAmount}\n${accountComment.length > 0 ? `Comment: ${accountComment}` : ''}`,
+            `✅ ${firstName} добавил новый счет: ${accountName} ${accountCurrency} ${accountAmount}\n${accountComment.length > 0 ? `Комментарий: ${accountComment}` : ''}`,
           );
         });
       } else {
@@ -440,11 +448,11 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
   public handleEditAccount(chatId: number): void {
     this.messageService.sendText(chatId, TEXT_MESSAGES.EDIT_ACCOUNT);
     this.stateManager.setUserState(chatId, STATE_STEPS.ADD_ACCOUNT_NAME);
-    this.messageService.sendText(chatId, '📝 Input new name of account:');
+    this.messageService.sendText(chatId, '📝 Введите новое название счета:');
   }
 
   public handleAddCommentToAccount(chatId: number): void {
-    this.messageService.sendText(chatId, '📝 Input comment for account:');
+    this.messageService.sendText(chatId, '📝 Введите комментарий к счету:');
     this.stateManager.updateUserStateStep(chatId, STATE_STEPS.ADD_ACCOUNT_COMMENT);
   }
 
