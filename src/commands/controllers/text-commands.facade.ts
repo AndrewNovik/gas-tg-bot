@@ -488,6 +488,8 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
         this.showStatsPerPeriod(chatId, period);
       } else if (period === STATS_PER_PERIOD.MONTH) {
         this.showStatsPerPeriod(chatId, period);
+      } else if (period === STATS_PER_PERIOD.THIRTY_DAYS) {
+        this.showStatsPerPeriod(chatId, period);
       } else {
         this.messageService.sendText(chatId, '❌ Неизвестный период для статистики');
       }
@@ -512,12 +514,23 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
       // Определяем диапазон дат для фильтрации
       const { startDate, endDate, periodTitle } = this.getDateRangeForPeriod(period);
 
-      // Фильтруем транзакции по диапазону дат (индекс 4 - дата)
+      // Фильтруем транзакции по диапазону дат (индекс 4 - дата) и исключаем трансферы и операции с валютой
       const filteredTransactions = allTransactions.filter((transaction) => {
         const transactionDateString = transaction[4]; // Дата находится под индексом 4
         const transactionDate = this.parseDate(transactionDateString);
+        const category = transaction[3]; // Категория (индекс 3)
 
         if (!transactionDate) return false;
+
+        // Исключаем трансферы и операции с валютой по названию категории
+        if (
+          category === 'Трансфер списание' ||
+          category === 'Трансфер пополнение' ||
+          category === 'Продажа валюты' ||
+          category === 'Покупка валюты'
+        ) {
+          return false;
+        }
 
         return transactionDate >= startDate && transactionDate <= endDate;
       });
@@ -531,7 +544,6 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
       let totalDelta = 0;
       let incomeTotal = 0;
       let expenseTotal = 0;
-      let transferCount = 0;
 
       const categoriesSummary: { [key: string]: { amount: number; type: string } } = {};
 
@@ -546,19 +558,23 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
         } else if (transactionType === TRANSACTION_TYPE.EXPENSE) {
           totalDelta -= amount;
           expenseTotal += amount;
-        } else if (transactionType === TRANSACTION_TYPE.TRANSFER) {
-          transferCount++;
-          // Для трансферов не меняем общую дельту, так как это внутренние переводы
         }
 
-        // Группируем по категориям с учетом типа
-        if (categoriesSummary[category]) {
-          categoriesSummary[category].amount += amount;
-        } else {
-          categoriesSummary[category] = {
-            amount: amount,
-            type: transactionType,
-          };
+        // Группируем по категориям с учетом типа (исключаем трансферы и операции с валютой)
+        if (
+          category !== 'Трансфер списание' &&
+          category !== 'Трансфер пополнение' &&
+          category !== 'Продажа валюты' &&
+          category !== 'Покупка валюты'
+        ) {
+          if (categoriesSummary[category]) {
+            categoriesSummary[category].amount += amount;
+          } else {
+            categoriesSummary[category] = {
+              amount: amount,
+              type: transactionType,
+            };
+          }
         }
       });
 
@@ -569,11 +585,6 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
       statsMessage += `💰 *Общая дельта:* ${totalDelta > 0 ? '+' : ''}${totalDelta.toFixed(2)} BYN\n`;
       statsMessage += `💵 *Доходы:* +${incomeTotal.toFixed(2)} BYN\n`;
       statsMessage += `💸 *Расходы:* -${expenseTotal.toFixed(2)} BYN\n`;
-
-      if (transferCount > 0) {
-        statsMessage += `🔄 *Переводы:* ${transferCount} шт.\n`;
-      }
-
       statsMessage += `📋 *Всего транзакций:* ${filteredTransactions.length} шт.\n\n`;
 
       // Статистика по категориям
@@ -638,6 +649,13 @@ export class TextCommandsFacade implements AbstractClassService<TextCommandsFaca
         startDate = new Date(today.getFullYear(), today.getMonth(), 1); // Первый день текущего месяца
         startDate.setHours(0, 0, 0, 0);
         periodTitle = `месяц (${Utilities.formatDate(startDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')} - ${Utilities.formatDate(endDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')})`;
+        break;
+
+      case STATS_PER_PERIOD.THIRTY_DAYS:
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 29); // 30 дней назад (включая сегодня)
+        startDate.setHours(0, 0, 0, 0);
+        periodTitle = `30 дней (${Utilities.formatDate(startDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')} - ${Utilities.formatDate(endDate, Session.getScriptTimeZone(), 'dd.MM.yyyy')})`;
         break;
 
       default:

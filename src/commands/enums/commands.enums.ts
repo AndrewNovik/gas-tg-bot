@@ -34,6 +34,7 @@ export enum SETUP_BOT_COMMANDS {
   STATS_PER_WEEK = 'statsperweek',
   STATS_PER_TWO_WEEKS = 'statspetwoweeks',
   STATS_PER_MONTH = 'statspermonth',
+  STATS_PER_30_DAYS = 'statsper30days',
   ACCOUNT_BALANCES = 'accountbalances',
   TRANSACTION_CATEGORIES = 'transactioncategories',
   CANCEL = 'cancel',
@@ -52,6 +53,7 @@ export enum MAIN_COMMANDS {
   STATS_PER_WEEK = '/statsperweek',
   STATS_PER_TWO_WEEKS = '/statspetwoweeks',
   STATS_PER_MONTH = '/statspermonth',
+  STATS_PER_30_DAYS = '/statsper30days',
   ACCOUNT_BALANCES = '/accountbalances',
   TRANSACTION_CATEGORIES = '/transactioncategories',
   CANCEL = '/cancel',
@@ -68,10 +70,11 @@ export enum TEXT_COMMANDS {
   ACCOUNT_BALANCES = '💳 Балансы счетов',
   TRANSACTION_CATEGORIES = '📝 Список категорий',
   CANCEL = '❌ Отмена',
-  STATS_PER_DAY = '📊 Статистика за день',
-  STATS_PER_WEEK = '📊 Статистика за неделю',
-  STATS_PER_TWO_WEEKS = '📊 Статистика за 2 недели',
-  STATS_PER_MONTH = '📊 Статистика за текущий месяц',
+  STATS_PER_DAY = '📊 за день',
+  STATS_PER_WEEK = '📊 за неделю',
+  STATS_PER_TWO_WEEKS = '📊 за 2 недели',
+  STATS_PER_MONTH = '📊 за текущий месяц',
+  STATS_PER_30_DAYS = '📊 за 30 дней',
   // Настройки to do позже
   SETTINGS = '⚙️ Настройки',
 }
@@ -151,4 +154,5 @@ export enum STATS_PER_PERIOD {
   WEEK = 'week',
   TWO_WEEKS = 'two_weeks',
   MONTH = 'month',
+  THIRTY_DAYS = 'thirty_days',
 }

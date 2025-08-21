@@ -533,7 +533,14 @@ export class QueryCommandsFacade implements AbstractClassService<QueryCommandsFa
       );
 
       if (debitResult.success && creditResult.success) {
-        this.messageService.sendText(chatId, TEXT_MESSAGES.TRANSFER_ADDED);
+        // Отправляем уведомление всем админам
+        USERS_ID.forEach((id) => {
+          this.messageService.sendText(
+            id,
+            `✅ ${firstName} выполнил перевод: ${transferAmount} BYN\nСо счета: ${transferFromAccount.name}\nНа счет: ${transferToAccount.name}\n${comment.length > 0 ? `Комментарий: ${comment}` : ''}`,
+          );
+        });
+
         this.stateManager.setUserState(chatId, STATE_STEPS.DEFAULT);
         this.messageService.sendReplyMarkup(
           chatId,

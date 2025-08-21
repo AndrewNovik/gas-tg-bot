@@ -114,6 +114,11 @@ export class TextCommandsController implements AbstractClassService<TextCommands
         this.textCommandsFacade.mainCommandStatsPerPeriod(chatId, STATS_PER_PERIOD.MONTH);
         break;
 
+      case MAIN_COMMANDS.STATS_PER_30_DAYS:
+      case TEXT_COMMANDS.STATS_PER_30_DAYS:
+        this.textCommandsFacade.mainCommandStatsPerPeriod(chatId, STATS_PER_PERIOD.THIRTY_DAYS);
+        break;
+
       case MAIN_COMMANDS.ACCOUNT_BALANCES:
       case TEXT_COMMANDS.ACCOUNT_BALANCES:
         this.textCommandsFacade.mainCommandAccountBalances(chatId);

@@ -20,10 +20,6 @@ function getApiUrl() {
   return PropertiesService.getScriptProperties().getProperty('API_URL');
 }
 
-function getWebAppUrl() {
-  return PropertiesService.getScriptProperties().getProperty('WEB_APP_URL');
-}
-
 function getAdminId() {
   return PropertiesService.getScriptProperties().getProperty('ADMIN_ID');
 }
@@ -32,13 +28,4 @@ function getSpreadsheetId() {
   return PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
 }
 
-export {
-  setSecrets,
-  getToken,
-  getBotId,
-  getWebAppId,
-  getApiUrl,
-  getWebAppUrl,
-  getAdminId,
-  getSpreadsheetId,
-};
+export { setSecrets, getToken, getBotId, getWebAppId, getApiUrl, getAdminId, getSpreadsheetId };

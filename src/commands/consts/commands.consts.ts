@@ -28,9 +28,9 @@ export const startMenuReplyKeyboard: TelegramReplyKeyboardInterface = {
     [TEXT_COMMANDS.INCOME, TEXT_COMMANDS.EXPENSE, TEXT_COMMANDS.TRANSFER],
     [TEXT_COMMANDS.ADDCATEGORY, TEXT_COMMANDS.ADDTRANSACTION, TEXT_COMMANDS.ADDACCOUNT],
     [TEXT_COMMANDS.ACCOUNT_BALANCES, TEXT_COMMANDS.TRANSACTION_CATEGORIES],
-    [TEXT_COMMANDS.STATS_PER_DAY, TEXT_COMMANDS.STATS_PER_WEEK],
-    [TEXT_COMMANDS.STATS_PER_TWO_WEEKS, TEXT_COMMANDS.STATS_PER_MONTH],
-    [TEXT_COMMANDS.SETTINGS],
+    [TEXT_COMMANDS.STATS_PER_MONTH, TEXT_COMMANDS.STATS_PER_30_DAYS],
+    [TEXT_COMMANDS.STATS_PER_DAY, TEXT_COMMANDS.STATS_PER_WEEK, TEXT_COMMANDS.STATS_PER_TWO_WEEKS],
+    // [TEXT_COMMANDS.SETTINGS],
   ],
   resize_keyboard: true, // автоматически подгоняет размер кнопок
   one_time_keyboard: true, // скрывать после нажатия
@@ -111,6 +111,10 @@ export const setupBotCommands: BotCommand[] = [
   {
     command: SETUP_BOT_COMMANDS.STATS_PER_MONTH,
     description: '📊 Статистика за текущий месяц',
+  },
+  {
+    command: SETUP_BOT_COMMANDS.STATS_PER_30_DAYS,
+    description: '📊 Статистика за 30 дней',
   },
   {
     command: SETUP_BOT_COMMANDS.ADDACCOUNT,
